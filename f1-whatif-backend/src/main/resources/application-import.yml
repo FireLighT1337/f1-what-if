@@ -1,0 +1,4 @@
+# Used only with the "import" profile: the importer starts a web server on a random port
+# so it can run while the real API is already running on 8080.
+server:
+  port: 0
