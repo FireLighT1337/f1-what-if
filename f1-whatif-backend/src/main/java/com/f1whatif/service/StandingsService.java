@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,12 +38,13 @@ public class StandingsService {
     private final StandingsCalculator calculator = new StandingsCalculator();
 
     public StandingsService(RaceResultRepository results, ScoringRulesetRepository rulesets,
-                            ShortenedRaceRepository shortenedRaces) {
+            ShortenedRaceRepository shortenedRaces) {
         this.results = results;
         this.rulesets = rulesets;
         this.shortenedRaces = shortenedRaces;
     }
 
+    @Cacheable("rulesets")
     @Transactional(readOnly = true)
     public List<RulesetSummary> listRulesets() {
         return rulesets.findAll().stream()
@@ -50,10 +52,12 @@ public class StandingsService {
                 .toList();
     }
 
+    @Cacheable("standings")
     @Transactional(readOnly = true)
     public StandingsResponse standings(int year, String rulesetCode, ScoringOptions options) {
         ScoringRuleset ruleset = rulesets.findByCode(rulesetCode)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown ruleset: " + rulesetCode));
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown ruleset: " + rulesetCode));
 
         List<RaceResult> rows = results.findByRace_Season_Year(year);
         if (rows.isEmpty()) {
@@ -128,7 +132,10 @@ public class StandingsService {
         return out;
     }
 
-    /** Real standings from the points awarded at the time. Ties are broken by driver id for now. */
+    /**
+     * Real standings from the points awarded at the time. Ties are broken by driver
+     * id for now.
+     */
     private static Map<Long, Integer> actualRanks(List<RaceResult> rows) {
         Map<Long, BigDecimal> totals = new HashMap<>();
         for (RaceResult row : rows) {

@@ -8,10 +8,17 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate   # Flyway owns the schema; Hibernate only checks it matches
+      ddl-auto: validate # Flyway owns the schema; Hibernate only checks it matches
+  cache:
+    cache-names: standings,rulesets
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=1h
+logging:
+  level:
+    com.f1whatif.aspect: DEBUG
 
 server:
-  port: ${PORT:8080}       # Cloud Run injects PORT
+  port: ${PORT:8080} # Cloud Run injects PORT
 
 management:
   endpoints:
