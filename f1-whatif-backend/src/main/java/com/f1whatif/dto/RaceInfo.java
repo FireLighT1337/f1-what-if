@@ -7,13 +7,14 @@ import java.time.LocalDate;
  * shortenedNote is null unless the race ended early and paid reduced points.
  */
 public record RaceInfo(
-        int round,
-        String name,
-        LocalDate date,
-        String circuit,
-        String locality,
-        String country,
-        boolean hasSprint,
-        boolean shortened,
-        String shortenedNote) {
+                Long id,
+                int round,
+                String name,
+                LocalDate date,
+                String circuit,
+                String locality,
+                String country,
+                boolean hasSprint,
+                boolean shortened,
+                String shortenedNote) {
 }
