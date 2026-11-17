@@ -1,0 +1,11 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-f1-red: #e10600;
+}
+
+@layer base {
+  body {
+    @apply bg-zinc-950 text-zinc-100 antialiased;
+  }
+}

@@ -1,0 +1,50 @@
+@if (referenceStatus() === 'error') {
+  <div role="alert" class="rounded-lg border border-red-900 bg-red-950/50 p-4 text-sm text-red-200">
+    <p>{{ referenceError() }}</p>
+    <button
+      type="button"
+      class="mt-3 rounded-md bg-f1-red px-3 py-1.5 font-medium text-white hover:opacity-90"
+      (click)="retry()"
+    >
+      Retry
+    </button>
+  </div>
+} @else {
+  @if (referenceError(); as message) {
+    <p role="status" class="mb-4 rounded-lg border border-amber-900 bg-amber-950/40 p-3 text-sm text-amber-200">
+      {{ message }}
+    </p>
+  }
+  <div class="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+    <app-settings-panel
+      [seasons]="seasons()"
+      [rulesets]="rulesets()"
+      [rulesetDetail]="rulesetDetail()"
+      [drivers]="drivers()"
+      [races]="races()"
+      [season]="season()"
+      [rulesetCode]="rulesetCode()"
+      [includeSprints]="includeSprints()"
+      [countBest]="countBest()"
+      [excludedDriverIds]="excludedDriverIds()"
+      [excludedRounds]="excludedRounds()"
+      (seasonChange)="onSeason($event)"
+      (rulesetChange)="onRuleset($event)"
+      (includeSprintsChange)="onIncludeSprints($event)"
+      (countBestChange)="onCountBest($event)"
+      (driverToggle)="onDriverToggle($event)"
+      (roundToggle)="onRoundToggle($event)"
+      (exclusionsClear)="onClearExclusions()"
+    />
+
+    <section aria-labelledby="results-heading" class="min-w-0">
+      <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h1 id="results-heading" class="text-xl font-semibold">{{ heading() }}</h1>
+        <p class="text-sm text-zinc-400">{{ subtitle() }}</p>
+      </div>
+      <div aria-live="polite">
+        <app-standings-table [rows]="rows()" [status]="status()" [error]="error()" />
+      </div>
+    </section>
+  </div>
+}

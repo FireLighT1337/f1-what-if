@@ -1,0 +1,180 @@
+<section aria-label="Scenario settings" class="space-y-6 rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+  <div>
+    <label for="season" class="mb-1 block text-sm font-medium text-zinc-300">Season</label>
+    <select
+      id="season"
+      class="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
+      (change)="onSeason($event)"
+    >
+      @for (item of seasons(); track item.year) {
+        <option [value]="item.year" [selected]="item.year === season()">
+          {{ item.year }} · {{ item.raceCount }} races
+        </option>
+      }
+    </select>
+  </div>
+
+  <div>
+    <label for="ruleset" class="mb-1 block text-sm font-medium text-zinc-300">Points system</label>
+    <select
+      id="ruleset"
+      class="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
+      (change)="onRuleset($event)"
+    >
+      @for (item of rulesets(); track item.code) {
+        <option [value]="item.code" [selected]="item.code === rulesetCode()">{{ item.name }}</option>
+      }
+    </select>
+    @if (selectedRulesetDescription(); as description) {
+      <p class="mt-1 text-xs text-zinc-500">{{ description }}</p>
+    }
+    @if (rulesetDetail(); as detail) {
+      <details class="mt-2 text-sm text-zinc-400">
+        <summary class="cursor-pointer text-zinc-300">Points table</summary>
+        <ul class="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 tabular-nums">
+          @for (entry of racePoints(); track entry.label) {
+            <li class="flex justify-between"><span>{{ entry.label }}</span><span>{{ entry.points }}</span></li>
+          }
+        </ul>
+        @if (sprintPoints().length > 0) {
+          <p class="mt-2 text-xs text-zinc-500">
+            Sprint:
+            @for (entry of sprintPoints(); track entry.label; let last = $last) {
+              {{ entry.points }}{{ last ? '' : ' · ' }}
+            }
+          </p>
+        }
+        @if (detail.fastestLapPoint > 0) {
+          <p class="mt-2 text-xs text-zinc-500">
+            Fastest lap: {{ detail.fastestLapPoint }} point{{
+              detail.fastestLapRequiresTopTen ? ' (top ten only)' : ''
+            }}
+          </p>
+        }
+        <p class="mt-2 text-xs text-zinc-500">{{ policyText() }}</p>
+      </details>
+    }
+  </div>
+
+  <div class="space-y-3">
+    <label class="flex items-center gap-2 text-sm">
+      <input
+        type="checkbox"
+        class="size-4 accent-red-600"
+        [checked]="includeSprints() && hasSprints()"
+        [disabled]="!hasSprints()"
+        (change)="onSprints($event)"
+      />
+      Count sprint races
+    </label>
+    @if (!hasSprints()) {
+      <p class="-mt-2 text-xs text-zinc-500">This season had no sprint races.</p>
+    }
+
+    <div>
+      <label class="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          class="size-4 accent-red-600"
+          [checked]="countBest() !== null"
+          (change)="onBestToggle($event)"
+        />
+        Only count each driver's best results
+      </label>
+      @if (countBest() !== null) {
+        <div class="mt-2 flex items-center gap-2 text-sm">
+          <label for="count-best" class="text-zinc-400">Best</label>
+          <input
+            id="count-best"
+            type="number"
+            min="1"
+            [attr.max]="races().length || null"
+            [value]="countBest()"
+            (change)="onBestValue($event)"
+            class="w-20 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1"
+          />
+          <span class="text-zinc-400">of {{ races().length }} rounds</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <fieldset>
+    <legend class="mb-1 text-sm font-medium text-zinc-300">
+      Exclude drivers <span class="text-zinc-500">({{ excludedDriverIds().length }})</span>
+    </legend>
+    <input
+      type="search"
+      aria-label="Filter drivers"
+      placeholder="Filter drivers"
+      [value]="driverFilter()"
+      (input)="onDriverFilter($event)"
+      class="mb-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm"
+    />
+    <ul class="max-h-56 space-y-0.5 overflow-y-auto pr-1">
+      @for (driver of filteredDrivers(); track driver.id) {
+        <li>
+          <label class="flex cursor-pointer items-start gap-2 rounded px-1 py-0.5 text-sm hover:bg-zinc-800">
+            <input
+              type="checkbox"
+              class="mt-1 size-4 accent-red-600"
+              [checked]="excludedDriverIds().includes(driver.id)"
+              (change)="driverToggle.emit(driver.id)"
+            />
+            <span>
+              {{ driver.name }}
+              <span class="block text-xs text-zinc-500">{{ driver.teams.join(', ') }}</span>
+            </span>
+          </label>
+        </li>
+      } @empty {
+        <li class="text-sm text-zinc-500">{{ drivers().length === 0 ? 'Loading drivers…' : 'No drivers match.' }}</li>
+      }
+    </ul>
+  </fieldset>
+
+  <fieldset>
+    <legend class="mb-1 text-sm font-medium text-zinc-300">
+      Exclude races <span class="text-zinc-500">({{ excludedRounds().length }})</span>
+    </legend>
+    <ul class="max-h-56 space-y-0.5 overflow-y-auto pr-1">
+      @for (race of races(); track race.round) {
+        <li>
+          <label class="flex cursor-pointer items-start gap-2 rounded px-1 py-0.5 text-sm hover:bg-zinc-800">
+            <input
+              type="checkbox"
+              class="mt-1 size-4 accent-red-600"
+              [checked]="excludedRounds().includes(race.round)"
+              (change)="roundToggle.emit(race.round)"
+            />
+            <span>
+              Round {{ race.round }} · {{ race.name }}
+              @if (race.hasSprint) {
+                <span class="ml-1 rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-300">Sprint</span>
+              }
+              @if (race.shortened) {
+                <span
+                  class="ml-1 rounded bg-amber-900/50 px-1.5 py-0.5 text-xs text-amber-200"
+                  [attr.title]="race.shortenedNote"
+                  >Shortened</span
+                >
+              }
+            </span>
+          </label>
+        </li>
+      } @empty {
+        <li class="text-sm text-zinc-500">Loading races…</li>
+      }
+    </ul>
+  </fieldset>
+
+  @if (hasExclusions()) {
+    <button
+      type="button"
+      class="text-sm text-zinc-400 underline hover:text-white"
+      (click)="exclusionsClear.emit()"
+    >
+      Clear exclusions
+    </button>
+  }
+</section>

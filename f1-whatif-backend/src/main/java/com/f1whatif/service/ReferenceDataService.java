@@ -24,8 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Lists the frontend needs to build a scenario: seasons, the races and drivers of a season,
- * and the details of a points system. The data only changes when something is imported, so
+ * Lists the frontend needs to build a scenario: seasons, the races and drivers
+ * of a season,
+ * and the details of a points system. The data only changes when something is
+ * imported, so
  * results are cached (see the "reference" cache in application.yml).
  */
 @Service
@@ -36,7 +38,7 @@ public class ReferenceDataService {
     private final ScoringRulesetRepository rulesets;
 
     public ReferenceDataService(ReferenceQueryRepository reference, ShortenedRaceRepository shortenedRaces,
-                                ScoringRulesetRepository rulesets) {
+            ScoringRulesetRepository rulesets) {
         this.reference = reference;
         this.shortenedRaces = shortenedRaces;
         this.rulesets = rulesets;
@@ -65,6 +67,7 @@ public class ReferenceDataService {
         for (Race race : races) {
             ShortenedRace shortened = shortenedByRound.get(race.getRound());
             out.add(new RaceInfo(
+                    race.getId(),
                     race.getRound(),
                     race.getName(),
                     race.getRaceDate(),
@@ -78,7 +81,9 @@ public class ReferenceDataService {
         return out;
     }
 
-    /** Drivers of a season, sorted by family name, with every team they raced for. */
+    /**
+     * Drivers of a season, sorted by family name, with every team they raced for.
+     */
     @Cacheable(cacheNames = "reference", key = "'drivers:' + #year")
     @Transactional(readOnly = true)
     public List<SeasonDriver> drivers(int year) {
@@ -86,7 +91,8 @@ public class ReferenceDataService {
         if (rows.isEmpty()) {
             throw noSeason(year);
         }
-        // The rows are sorted, so a driver's rows are next to each other and the order is kept.
+        // The rows are sorted, so a driver's rows are next to each other and the order
+        // is kept.
         Map<Long, SeasonDriverRow> firstRowOfDriver = new LinkedHashMap<>();
         Map<Long, List<String>> teamsOfDriver = new HashMap<>();
         for (SeasonDriverRow row : rows) {
