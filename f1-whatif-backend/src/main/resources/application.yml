@@ -10,7 +10,7 @@ spring:
     hibernate:
       ddl-auto: validate # Flyway owns the schema; Hibernate only checks it matches
   cache:
-    cache-names: standings,rulesets
+    cache-names: standings,rulesets,reference
     caffeine:
       spec: maximumSize=500,expireAfterWrite=1h
 logging:
