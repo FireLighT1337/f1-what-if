@@ -43,6 +43,7 @@ public class SecurityConfig {
                                                                 "/api/rulesets/**",
                                                                 "/api/seasons/**",
                                                                 "/api/shared/**",
+                                                                "/api/drivers/**",
                                                                 "/actuator/health/**",
                                                                 "/v3/api-docs/**",
                                                                 "/swagger-ui/**",

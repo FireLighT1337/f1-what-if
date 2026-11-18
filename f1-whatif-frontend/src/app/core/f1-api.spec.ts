@@ -70,4 +70,16 @@ describe('F1Api', () => {
     expect(request.request.params.get('excludeRaces')).toBe('60');
     request.flush({ season: 1984, ruleset: 'classic-1961', standings: [] });
   });
+
+  it('requests how a driver finished a season', () => {
+    api.driverSeason(1984, 2).subscribe();
+
+    http.expectOne('/api/seasons/1984/drivers/2/results').flush({});
+  });
+
+  it('requests the photo of a driver', () => {
+    api.driverPhoto(2).subscribe();
+
+    http.expectOne('/api/drivers/2/photo').flush({});
+  });
 });

@@ -43,7 +43,7 @@
         <p class="text-sm text-zinc-400">{{ subtitle() }}</p>
       </div>
       <div aria-live="polite">
-        <app-standings-table [rows]="rows()" [status]="status()" [error]="error()" />
+        <app-standings-table [rows]="rows()" [season]="standings()?.season ?? null" [status]="status()" [error]="error()" />
       </div>
     </section>
   </div>

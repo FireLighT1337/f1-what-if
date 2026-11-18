@@ -73,3 +73,61 @@ export interface StandingsQuery {
   excludeDrivers: number[];
   excludeRaces: number[];
 }
+
+/** One driver's season: how they finished every race. */
+
+export interface DriverProfile {
+  id: number;
+  name: string;
+  code: string | null;
+  nationality: string | null;
+  dateOfBirth: string | null;
+  wikipediaUrl: string | null;
+}
+
+export interface SprintResultInfo {
+  grid: number | null;
+  finishPosition: number | null;
+  positionText: string | null;
+  points: number | null;
+}
+
+export interface DriverRaceResult {
+  round: number;
+  raceName: string;
+  date: string | null;
+  shortened: boolean;
+  /** False when the driver did not take part in this race. */
+  entered: boolean;
+  team: string | null;
+  grid: number | null;
+  /** Null when the driver was not classified; positionText then says why. */
+  finishPosition: number | null;
+  positionText: string | null;
+  status: string | null;
+  points: number | null;
+  sprint: SprintResultInfo | null;
+}
+
+export interface DriverSeasonSummary {
+  racesEntered: number;
+  wins: number;
+  podiums: number;
+  points: number;
+}
+
+export interface DriverSeasonResponse {
+  driver: DriverProfile;
+  season: number;
+  summary: DriverSeasonSummary;
+  races: DriverRaceResult[];
+}
+
+/** A freely licensed photo from Wikimedia Commons; photoUrl is null when there is none. */
+export interface DriverPhoto {
+  photoUrl: string | null;
+  sourceUrl: string | null;
+  articleUrl: string | null;
+  width: number | null;
+  height: number | null;
+}

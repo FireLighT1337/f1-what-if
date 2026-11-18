@@ -169,13 +169,17 @@ public class SeasonImporter {
     }
 
     private Driver findOrCreateDriver(DriverDto dto) {
-        return drivers.findByExternalId(dto.driverId()).orElseGet(() -> drivers.save(new Driver(
+        Driver driver = drivers.findByExternalId(dto.driverId()).orElseGet(() -> drivers.save(new Driver(
                 dto.driverId(),
                 dto.givenName(),
                 dto.familyName(),
                 dto.code(),
                 dto.nationality(),
                 ImportMapping.parseDate(dto.dateOfBirth()))));
+        // Drivers imported before the Wikipedia link was stored get it now; an existing
+        // link is kept.
+        driver.fillWikipediaUrlIfMissing(dto.url());
+        return driver;
     }
 
     private Team findOrCreateTeam(ResultDto row) {

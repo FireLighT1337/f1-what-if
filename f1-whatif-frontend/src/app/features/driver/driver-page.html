@@ -1,0 +1,167 @@
+<a routerLink="/explorer" class="mb-4 inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white">
+  <span aria-hidden="true">←</span> Back to standings
+</a>
+
+@if (invalidAddress()) {
+  <p role="alert" class="rounded-lg border border-red-900 bg-red-950/50 p-4 text-sm text-red-200">
+    This address does not point to a driver.
+  </p>
+} @else if (entry()?.error; as message) {
+  <div role="alert" class="rounded-lg border border-red-900 bg-red-950/50 p-4 text-sm text-red-200">
+    <p>{{ message }}</p>
+    <button
+      type="button"
+      class="mt-3 rounded-md bg-f1-red px-3 py-1.5 font-medium text-white hover:opacity-90"
+      (click)="retry()"
+    >
+      Try again
+    </button>
+  </div>
+} @else if (data(); as season) {
+  <header class="flex flex-col gap-5 sm:flex-row sm:items-start">
+    <div class="flex shrink-0 flex-col items-start gap-1">
+      <div class="size-36 overflow-hidden rounded-xl bg-zinc-800">
+        @if (photo(); as image) {
+          @if (image.photoUrl) {
+            <img
+              [src]="image.photoUrl"
+              [alt]="'Photo of ' + season.driver.name"
+              class="size-full object-cover object-top"
+            />
+          } @else {
+            <div
+              class="flex size-full items-center justify-center text-4xl font-semibold text-zinc-500"
+              aria-hidden="true"
+            >
+              {{ initials() }}
+            </div>
+          }
+        } @else {
+          <div class="size-full animate-pulse bg-zinc-800" aria-hidden="true"></div>
+        }
+      </div>
+      @if (photo()?.sourceUrl; as source) {
+        <a
+          [href]="source"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-xs text-zinc-500 underline hover:text-zinc-300"
+          >Photo: Wikimedia Commons</a
+        >
+      }
+    </div>
+
+    <div class="min-w-0 flex-1">
+      <h1 class="text-3xl font-semibold tracking-tight">{{ season.driver.name }}</h1>
+      <p class="mt-1 text-zinc-400">
+        {{ season.season }} season
+        @if (season.driver.nationality) {
+          · {{ season.driver.nationality }}
+        }
+        @if (season.driver.dateOfBirth) {
+          · born {{ season.driver.dateOfBirth | date: 'd MMMM y' }}
+        }
+      </p>
+      @if (season.driver.wikipediaUrl; as article) {
+        <a
+          [href]="article"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mt-1 inline-block text-sm text-zinc-400 underline hover:text-white"
+          >Wikipedia article</a
+        >
+      }
+
+      <dl class="mt-4 grid max-w-md grid-cols-4 gap-3 text-center">
+        <div class="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-2">
+          <dt class="text-xs uppercase tracking-wide text-zinc-500">Races</dt>
+          <dd class="text-xl font-semibold tabular-nums">{{ season.summary.racesEntered }}</dd>
+        </div>
+        <div class="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-2">
+          <dt class="text-xs uppercase tracking-wide text-zinc-500">Wins</dt>
+          <dd class="text-xl font-semibold tabular-nums">{{ season.summary.wins }}</dd>
+        </div>
+        <div class="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-2">
+          <dt class="text-xs uppercase tracking-wide text-zinc-500">Podiums</dt>
+          <dd class="text-xl font-semibold tabular-nums">{{ season.summary.podiums }}</dd>
+        </div>
+        <div class="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-2">
+          <dt class="text-xs uppercase tracking-wide text-zinc-500">Points</dt>
+          <dd class="text-xl font-semibold tabular-nums">{{ season.summary.points | number: '1.0-1' }}</dd>
+        </div>
+      </dl>
+    </div>
+  </header>
+
+  <section class="mt-8" aria-labelledby="results-heading">
+    <h2 id="results-heading" class="mb-3 text-xl font-semibold">Race by race</h2>
+    <div class="overflow-x-auto rounded-lg border border-zinc-800">
+      <table class="w-full text-left text-sm">
+        <caption class="sr-only">
+          Results of {{ season.driver.name }} in the {{ season.season }} season
+        </caption>
+        <thead class="bg-zinc-900 text-xs uppercase tracking-wide text-zinc-400">
+          <tr>
+            <th scope="col" class="px-3 py-2">Rd</th>
+            <th scope="col" class="px-3 py-2">Grand Prix</th>
+            <th scope="col" class="px-3 py-2">Team</th>
+            <th scope="col" class="px-3 py-2 text-right">Grid</th>
+            @if (hasSprints()) {
+              <th scope="col" class="px-3 py-2 text-right">Sprint</th>
+            }
+            <th scope="col" class="px-3 py-2 text-right">Finish</th>
+            <th scope="col" class="px-3 py-2">Status</th>
+            <th scope="col" class="px-3 py-2 text-right">Points</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-800">
+          @for (race of season.races; track race.round) {
+            <tr [class]="race.entered ? 'hover:bg-zinc-900/60' : 'text-zinc-600'">
+              <td class="px-3 py-2 tabular-nums">{{ race.round }}</td>
+              <td class="px-3 py-2">
+                {{ race.raceName }}
+                @if (race.shortened) {
+                  <span class="ml-1 rounded bg-amber-900/50 px-1.5 py-0.5 text-xs text-amber-200">Shortened</span>
+                }
+                @if (race.date) {
+                  <span class="block text-xs text-zinc-500">{{ race.date | date: 'd MMM y' }}</span>
+                }
+              </td>
+              @if (race.entered) {
+                <td class="px-3 py-2">{{ race.team }}</td>
+                <td class="px-3 py-2 text-right tabular-nums">{{ race.grid ?? '–' }}</td>
+                @if (hasSprints()) {
+                  <td class="px-3 py-2 text-right tabular-nums">
+                    @if (race.sprint; as sprint) {
+                      <span [title]="'Sprint points: ' + (sprint.points ?? 0)">{{
+                        sprint.finishPosition ?? sprint.positionText ?? '–'
+                      }}</span>
+                    } @else {
+                      –
+                    }
+                  </td>
+                }
+                <td class="px-3 py-2 text-right tabular-nums" [class]="finishClass(race)">
+                  <span [attr.title]="finishDescription(race)" [attr.aria-label]="finishDescription(race)">{{
+                    finishLabel(race)
+                  }}</span>
+                </td>
+                <td class="px-3 py-2 text-zinc-400">{{ race.status ?? '' }}</td>
+                <td class="px-3 py-2 text-right tabular-nums">{{ race.points ?? 0 | number: '1.0-1' }}</td>
+              } @else {
+                <td class="px-3 py-2 italic" [attr.colspan]="hasSprints() ? 6 : 5">Did not take part</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+} @else {
+  <div class="space-y-3" aria-busy="true" aria-label="Loading driver">
+    <div class="h-36 w-full animate-pulse rounded-xl bg-zinc-900 sm:w-2/3"></div>
+    @for (placeholder of [1, 2, 3, 4, 5, 6]; track placeholder) {
+      <div class="h-9 animate-pulse rounded-md bg-zinc-900"></div>
+    }
+  </div>
+}

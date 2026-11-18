@@ -3,6 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from './api-config';
 import {
+  DriverPhoto,
+  DriverSeasonResponse,
   RaceInfo,
   RulesetDetail,
   RulesetSummary,
@@ -54,5 +56,13 @@ export class F1Api {
     return this.http.get<StandingsResponse>(`${this.baseUrl}/seasons/${query.year}/standings`, {
       params,
     });
+  }
+
+  driverSeason(year: number, driverId: number): Observable<DriverSeasonResponse> {
+    return this.http.get<DriverSeasonResponse>(`${this.baseUrl}/seasons/${year}/drivers/${driverId}/results`);
+  }
+
+  driverPhoto(driverId: number): Observable<DriverPhoto> {
+    return this.http.get<DriverPhoto>(`${this.baseUrl}/drivers/${driverId}/photo`);
   }
 }

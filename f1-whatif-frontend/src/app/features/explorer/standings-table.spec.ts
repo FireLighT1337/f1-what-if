@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { StandingRow } from '../../core/models';
 import { StandingsTable } from './standings-table';
 
@@ -7,6 +8,8 @@ function row(rank: number, driver: string, points: number, positionChange: numbe
 }
 
 describe('StandingsTable', () => {
+  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([])] }));
+
   function render(inputs: Record<string, unknown>): HTMLElement {
     const fixture = TestBed.createComponent(StandingsTable);
     for (const [name, value] of Object.entries(inputs)) {
@@ -62,5 +65,20 @@ describe('StandingsTable', () => {
 
     expect(element.querySelector('table')).not.toBeNull();
     expect(element.querySelector('.opacity-50')).not.toBeNull();
+  });
+
+  it('links each driver to their page for that season', () => {
+    const element = render({ rows: [row(1, 'Niki Lauda', 72, 0)], season: 1984, status: 'loaded' });
+
+    const link = element.querySelector('tbody a');
+    expect(link?.textContent?.trim()).toBe('Niki Lauda');
+    expect(link?.getAttribute('href')).toBe('/seasons/1984/drivers/1');
+  });
+
+  it('shows plain names when the season is not known', () => {
+    const element = render({ rows: [row(1, 'Niki Lauda', 72, 0)], status: 'loaded' });
+
+    expect(element.querySelector('tbody a')).toBeNull();
+    expect(element.querySelector('tbody')?.textContent).toContain('Niki Lauda');
   });
 });

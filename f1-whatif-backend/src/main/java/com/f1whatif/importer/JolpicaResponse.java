@@ -90,7 +90,8 @@ public record JolpicaResponse(@JsonProperty("MRData") MrData mrData) {
             String givenName,
             String familyName,
             String dateOfBirth,
-            String nationality) {
+            String nationality,
+            String url) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -5,6 +5,14 @@
 }
 
 @layer base {
+  /*
+   * Every size in the app is relative to this value, so it scales text and spacing together.
+   * 100% is the browser default (16px); change this one number to make everything larger or smaller.
+   */
+  html {
+    font-size: 112.5%;
+  }
+
   body {
     @apply bg-zinc-950 text-zinc-100 antialiased;
   }

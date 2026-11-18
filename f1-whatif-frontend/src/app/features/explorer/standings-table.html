@@ -32,7 +32,17 @@
         @for (row of rows(); track row.driverId) {
           <tr class="hover:bg-zinc-900/60">
             <td class="px-4 py-2 font-semibold tabular-nums">{{ row.rank }}</td>
-            <td class="px-4 py-2">{{ row.driver }}</td>
+            <td class="px-4 py-2">
+              @if (season(); as year) {
+                <a
+                  [routerLink]="['/seasons', year, 'drivers', row.driverId]"
+                  class="underline-offset-2 hover:text-f1-red hover:underline"
+                  >{{ row.driver }}</a
+                >
+              } @else {
+                {{ row.driver }}
+              }
+            </td>
             <td class="px-4 py-2 text-right tabular-nums">{{ row.points | number: '1.0-1' }}</td>
             <td class="px-4 py-2 text-right tabular-nums" [class]="changeClass(row)">
               <span [attr.title]="changeDescription(row)" [attr.aria-label]="changeDescription(row)">{{

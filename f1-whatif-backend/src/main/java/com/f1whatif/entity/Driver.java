@@ -32,6 +32,9 @@ public class Driver {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
+    @Column(name = "wikipedia_url")
+    private String wikipediaUrl;
+
     protected Driver() {
     }
 
@@ -77,9 +80,20 @@ public class Driver {
         return givenName + " " + familyName;
     }
 
+    public String getWikipediaUrl() {
+        return wikipediaUrl;
+    }
+
     @Override
     public String toString() {
         return "Driver [id=" + id + ", externalId=" + externalId + ", givenName=" + givenName + ", familyName="
                 + familyName + ", code=" + code + ", nationality=" + nationality + ", dateOfBirth=" + dateOfBirth + "]";
+    }
+
+    /** Called by the importer: keeps the first link, never overwrites it. */
+    public void fillWikipediaUrlIfMissing(String url) {
+        if (wikipediaUrl == null && url != null && !url.isBlank()) {
+            wikipediaUrl = url.trim();
+        }
     }
 }

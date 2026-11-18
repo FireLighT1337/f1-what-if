@@ -1,17 +1,20 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { StandingRow } from '../../core/models';
 import { LoadStatus } from '../../state/reference/reference.reducer';
 
 /** The what-if standings, with how each driver moved compared with the real season. */
 @Component({
   selector: 'app-standings-table',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, RouterLink],
   templateUrl: './standings-table.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StandingsTable {
   readonly rows = input.required<StandingRow[]>();
+  /** The season the standings are for; the driver links need it. */
+  readonly season = input<number | null>(null);
   readonly status = input<LoadStatus>('idle');
   readonly error = input<string | null>(null);
 
