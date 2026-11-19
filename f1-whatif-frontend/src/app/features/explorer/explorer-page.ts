@@ -8,13 +8,17 @@ import {
   selectSelectedRulesetDetail,
 } from '../../state/explorer/explorer.selectors';
 import { referenceFeature } from '../../state/reference/reference.reducer';
+import { selectIsLoggedIn } from '../../state/auth/auth.selectors';
+import { ScenariosActions } from '../../state/scenarios/scenarios.actions';
+import { scenariosFeature } from '../../state/scenarios/scenarios.reducer';
+import { ScenarioSave, SaveRequest } from './scenario-save';
 import { SettingsPanel } from './settings-panel';
 import { StandingsTable } from './standings-table';
 
 /** Connects the explorer state to the settings and the standings table. */
 @Component({
   selector: 'app-explorer-page',
-  imports: [SettingsPanel, StandingsTable],
+  imports: [SettingsPanel, StandingsTable, ScenarioSave],
   templateUrl: './explorer-page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,11 +40,17 @@ export class ExplorerPage implements OnInit {
   protected readonly status = this.store.selectSignal(explorerFeature.selectStatus);
   protected readonly error = this.store.selectSignal(explorerFeature.selectError);
 
+  protected readonly activeScenario = this.store.selectSignal(explorerFeature.selectScenario);
+  protected readonly loggedIn = this.store.selectSignal(selectIsLoggedIn);
+  protected readonly saveStatus = this.store.selectSignal(scenariosFeature.selectSaveStatus);
+  protected readonly saveError = this.store.selectSignal(scenariosFeature.selectSaveError);
+
   protected readonly drivers = this.store.selectSignal(selectSelectedDrivers);
   protected readonly races = this.store.selectSignal(selectSelectedRaces);
   protected readonly rulesetDetail = this.store.selectSignal(selectSelectedRulesetDetail);
 
   protected readonly rows = computed(() => this.standings()?.standings ?? []);
+  protected readonly canSave = computed(() => this.standings() !== null && this.status() !== 'error');
   protected readonly heading = computed(() => (this.season() === null ? 'Standings' : `${this.season()} standings`));
   protected readonly subtitle = computed(() => {
     const name = this.rulesets().find((ruleset) => ruleset.code === this.rulesetCode())?.name;
@@ -79,6 +89,14 @@ export class ExplorerPage implements OnInit {
 
   protected onRoundToggle(round: number): void {
     this.store.dispatch(ExplorerActions.roundExclusionToggled({ round }));
+  }
+
+  protected onSave(request: SaveRequest): void {
+    this.store.dispatch(ScenariosActions.saveRequested(request));
+  }
+
+  protected onSaveDismiss(): void {
+    this.store.dispatch(ScenariosActions.saveDismissed());
   }
 
   protected onClearExclusions(): void {

@@ -1,5 +1,6 @@
 import { StandingsResponse } from '../../core/models';
 import { ReferenceActions } from '../reference/reference.actions';
+import { ScenariosActions } from '../scenarios/scenarios.actions';
 import { ExplorerActions } from './explorer.actions';
 import { DEFAULT_RULESET, ExplorerState, explorerFeature, initialExplorerState } from './explorer.reducer';
 
@@ -107,5 +108,77 @@ describe('explorer reducer', () => {
 
     expect(state.status).toBe('error');
     expect(state.error).toBe('No data found.');
+  });
+});
+
+describe('explorer reducer with saved scenarios', () => {
+  const scenario = {
+    id: 7,
+    name: 'No Monaco',
+    seasonYear: 1984,
+    rulesetCode: 'classic-1961',
+    includeSprints: false,
+    countBest: 11,
+    excludedDriverIds: [3],
+    excludedRounds: [6],
+    publicId: null,
+    createdAt: '2026-11-18T10:00:00Z',
+    updatedAt: '2026-11-18T10:00:00Z',
+  };
+
+  it('loads all settings of a scenario and remembers it as the active one', () => {
+    const state = reduce(initialExplorerState, ExplorerActions.scenarioOpened({ scenario, owned: true }));
+
+    expect(state).toMatchObject({
+      season: 1984,
+      rulesetCode: 'classic-1961',
+      includeSprints: false,
+      countBest: 11,
+      excludedDriverIds: [3],
+      excludedRounds: [6],
+      scenario: { id: 7, name: 'No Monaco' },
+      status: 'loading',
+    });
+  });
+
+  it('does not make a shared scenario the active one, because it belongs to someone else', () => {
+    const state = reduce(initialExplorerState, ExplorerActions.scenarioOpened({ scenario, owned: false }));
+
+    expect(state.scenario).toBeNull();
+    expect(state.season).toBe(1984);
+  });
+
+  it('copies the exclusions instead of sharing the arrays', () => {
+    const state = reduce(initialExplorerState, ExplorerActions.scenarioOpened({ scenario, owned: true }));
+
+    expect(state.excludedDriverIds).not.toBe(scenario.excludedDriverIds);
+  });
+
+  it('keeps the active scenario while the settings are changed', () => {
+    const opened = reduce(initialExplorerState, ExplorerActions.scenarioOpened({ scenario, owned: true }));
+
+    const changed = reduce(opened, ExplorerActions.countBestChanged({ value: 9 }));
+
+    expect(changed.scenario).toEqual({ id: 7, name: 'No Monaco' });
+  });
+
+  it('makes a newly saved scenario the active one', () => {
+    const state = reduce(initialExplorerState, ScenariosActions.saveSucceeded({ scenario }));
+
+    expect(state.scenario).toEqual({ id: 7, name: 'No Monaco' });
+  });
+
+  it('lets go of the active scenario when it is deleted, but not of another one', () => {
+    const active = reduce(initialExplorerState, ScenariosActions.saveSucceeded({ scenario }));
+
+    expect(reduce(active, ScenariosActions.deleteSucceeded({ id: 7 })).scenario).toBeNull();
+    expect(reduce(active, ScenariosActions.deleteSucceeded({ id: 8 })).scenario).toEqual({ id: 7, name: 'No Monaco' });
+  });
+
+  it('shows an error when the races of the selected season cannot be loaded', () => {
+    const state = reduce(initialExplorerState, ReferenceActions.seasonDataFailed({ year: 1984, error: 'Cannot reach the server.' }));
+
+    expect(state.status).toBe('error');
+    expect(state.error).toBe('Cannot reach the server.');
   });
 });

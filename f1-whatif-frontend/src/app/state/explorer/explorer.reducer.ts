@@ -1,11 +1,18 @@
 import { createFeature, createReducer, on } from '@ngrx/store';
 import { StandingsResponse } from '../../core/models';
 import { ReferenceActions } from '../reference/reference.actions';
+import { ScenariosActions } from '../scenarios/scenarios.actions';
 import { LoadStatus } from '../reference/reference.reducer';
 import { ExplorerActions } from './explorer.actions';
 
 /** The points system that is selected first, if the backend offers it. */
 export const DEFAULT_RULESET = 'current-2025';
+
+/** The saved scenario that the current settings came from, so it can be updated. */
+export interface ActiveScenario {
+  id: number;
+  name: string;
+}
 
 /** What the user has chosen, plus the standings calculated for it. */
 export interface ExplorerState {
@@ -17,6 +24,7 @@ export interface ExplorerState {
   excludedDriverIds: number[];
   /** Races are excluded by round number, which is also how saved scenarios refer to them. */
   excludedRounds: number[];
+  scenario: ActiveScenario | null;
   standings: StandingsResponse | null;
   status: LoadStatus;
   error: string | null;
@@ -29,6 +37,7 @@ export const initialExplorerState: ExplorerState = {
   countBest: null,
   excludedDriverIds: [],
   excludedRounds: [],
+  scenario: null,
   standings: null,
   status: 'idle',
   error: null,
@@ -82,6 +91,27 @@ export const explorerFeature = createFeature({
       excludedRounds: [],
       ...recalculating,
     })),
+    on(ExplorerActions.scenarioOpened, (state, { scenario, owned }) => ({
+      ...state,
+      season: scenario.seasonYear,
+      rulesetCode: scenario.rulesetCode,
+      includeSprints: scenario.includeSprints,
+      countBest: scenario.countBest,
+      excludedDriverIds: [...scenario.excludedDriverIds],
+      excludedRounds: [...scenario.excludedRounds],
+      scenario: owned ? { id: scenario.id, name: scenario.name } : null,
+      ...recalculating,
+    })),
+    on(ScenariosActions.saveSucceeded, (state, { scenario }) => ({
+      ...state,
+      scenario: { id: scenario.id, name: scenario.name },
+    })),
+    on(ScenariosActions.deleteSucceeded, (state, { id }) => ({
+      ...state,
+      scenario: state.scenario?.id === id ? null : state.scenario,
+    })),
+    // Without the races of the season the exclusions cannot be applied, so there is nothing to show.
+    on(ReferenceActions.seasonDataFailed, (state, { error }) => ({ ...state, status: 'error' as const, error })),
     on(ExplorerActions.standingsSucceeded, (state, { response }) => ({
       ...state,
       standings: response,

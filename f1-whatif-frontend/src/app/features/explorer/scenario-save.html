@@ -1,0 +1,90 @@
+@if (!loggedIn()) {
+  <p class="text-sm text-zinc-400">
+    <a routerLink="/login" [queryParams]="{ returnUrl: '/explorer' }" class="text-white underline"
+      >Log in</a
+    >
+    or
+    <a
+      routerLink="/register"
+      [queryParams]="{ returnUrl: '/explorer' }"
+      class="text-white underline"
+      >sign up</a
+    >
+    to save this scenario.
+  </p>
+} @else if (status() === 'saved' && open()) {
+  <div role="status" class="flex flex-wrap items-center gap-3 text-sm text-emerald-300">
+    <span>Saved.</span>
+    <a routerLink="/scenarios" class="underline">All scenarios</a>
+    <button type="button" class="text-zinc-400 underline hover:text-white" (click)="close()">
+      Close
+    </button>
+  </div>
+} @else if (!open()) {
+  <button
+    type="button"
+    class="rounded-md border border-zinc-700 px-3 py-1.5 text-sm hover:border-zinc-500 disabled:opacity-50"
+    [disabled]="!canSave()"
+    (click)="openForm()"
+  >
+    {{ active() ? 'Save changes…' : 'Save scenario…' }}
+  </button>
+} @else {
+  <form class="flex flex-wrap items-end gap-3" (submit)="$event.preventDefault(); submit()">
+    @if (active(); as scenario) {
+      <fieldset class="flex gap-4 text-sm">
+        <legend class="sr-only">Save as</legend>
+        <label class="flex items-center gap-1">
+          <input
+            type="radio"
+            name="mode"
+            class="accent-red-600"
+            [checked]="mode() === 'update'"
+            (change)="onMode('update')"
+          />
+          Update “{{ scenario.name }}”
+        </label>
+        <label class="flex items-center gap-1">
+          <input
+            type="radio"
+            name="mode"
+            class="accent-red-600"
+            [checked]="mode() === 'new'"
+            (change)="onMode('new')"
+          />
+          Save as new
+        </label>
+      </fieldset>
+    }
+    <div>
+      <label for="scenario-name" class="mb-1 block text-xs text-zinc-400">Name</label>
+      <input
+        id="scenario-name"
+        type="text"
+        maxlength="100"
+        autocomplete="off"
+        [value]="name()"
+        (input)="onName($event)"
+        class="w-64 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-sm"
+      />
+    </div>
+    <button
+      type="submit"
+      class="rounded-md bg-f1-red px-3 py-1.5 text-sm text-white hover:opacity-90 disabled:opacity-50"
+      [disabled]="!nameValid() || status() === 'saving'"
+    >
+      {{ status() === 'saving' ? 'Saving…' : 'Save' }}
+    </button>
+
+    <button
+      type="button"
+      class="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white"
+      (click)="close()"
+    >
+      Cancel
+    </button>
+    @if (error(); as message) {
+      <p role="alert" class="w-full text-sm text-red-300">{{ message }}</p>
+    }
+  </form>
+}

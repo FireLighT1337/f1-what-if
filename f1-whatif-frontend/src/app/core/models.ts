@@ -131,3 +131,36 @@ export interface DriverPhoto {
   width: number | null;
   height: number | null;
 }
+
+/** Accounts and saved scenarios. */
+
+export interface UserInfo {
+  id: number;
+  email: string;
+  role: string;
+}
+
+export interface TokenResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresInSeconds: number;
+}
+
+export interface ScenarioRequest {
+  name: string;
+  seasonYear: number;
+  rulesetCode: string;
+  includeSprints: boolean;
+  countBest: number | null;
+  excludedDriverIds: number[];
+  /** Races are saved by round number, because race ids change when a season is imported again. */
+  excludedRounds: number[];
+}
+
+export interface ScenarioResponse extends ScenarioRequest {
+  id: number;
+  /** Set while the scenario is shared; anyone with this id can view it. */
+  publicId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

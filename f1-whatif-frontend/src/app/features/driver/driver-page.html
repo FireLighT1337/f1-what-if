@@ -1,5 +1,22 @@
-<a routerLink="/explorer" class="mb-4 inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white">
-  <span aria-hidden="true">←</span> Back to standings
+<a
+  routerLink="/explorer"
+  class="mb-4 inline-flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="h-4 w-4"
+    aria-hidden="true"
+  >
+    <path d="M19 12H5" />
+    <path d="m12 19-7-7 7-7" />
+  </svg>
+  Back to standings
 </a>
 
 @if (invalidAddress()) {
@@ -87,7 +104,9 @@
         </div>
         <div class="rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-2">
           <dt class="text-xs uppercase tracking-wide text-zinc-500">Points</dt>
-          <dd class="text-xl font-semibold tabular-nums">{{ season.summary.points | number: '1.0-1' }}</dd>
+          <dd class="text-xl font-semibold tabular-nums">
+            {{ season.summary.points | number: '1.0-1' }}
+          </dd>
         </div>
       </dl>
     </div>
@@ -98,7 +117,15 @@
     <div class="overflow-x-auto rounded-lg border border-zinc-800">
       <table class="w-full text-left text-sm">
         <caption class="sr-only">
-          Results of {{ season.driver.name }} in the {{ season.season }} season
+          Results of
+          {{
+            season.driver.name
+          }}
+          in the
+          {{
+            season.season
+          }}
+          season
         </caption>
         <thead class="bg-zinc-900 text-xs uppercase tracking-wide text-zinc-400">
           <tr>
@@ -121,7 +148,9 @@
               <td class="px-3 py-2">
                 {{ race.raceName }}
                 @if (race.shortened) {
-                  <span class="ml-1 rounded bg-amber-900/50 px-1.5 py-0.5 text-xs text-amber-200">Shortened</span>
+                  <span class="ml-1 rounded bg-amber-900/50 px-1.5 py-0.5 text-xs text-amber-200"
+                    >Shortened</span
+                  >
                 }
                 @if (race.date) {
                   <span class="block text-xs text-zinc-500">{{ race.date | date: 'd MMM y' }}</span>
@@ -142,14 +171,20 @@
                   </td>
                 }
                 <td class="px-3 py-2 text-right tabular-nums" [class]="finishClass(race)">
-                  <span [attr.title]="finishDescription(race)" [attr.aria-label]="finishDescription(race)">{{
-                    finishLabel(race)
-                  }}</span>
+                  <span
+                    [attr.title]="finishDescription(race)"
+                    [attr.aria-label]="finishDescription(race)"
+                    >{{ finishLabel(race) }}</span
+                  >
                 </td>
                 <td class="px-3 py-2 text-zinc-400">{{ race.status ?? '' }}</td>
-                <td class="px-3 py-2 text-right tabular-nums">{{ race.points ?? 0 | number: '1.0-1' }}</td>
+                <td class="px-3 py-2 text-right tabular-nums">
+                  {{ race.points ?? 0 | number: '1.0-1' }}
+                </td>
               } @else {
-                <td class="px-3 py-2 italic" [attr.colspan]="hasSprints() ? 6 : 5">Did not take part</td>
+                <td class="px-3 py-2 italic" [attr.colspan]="hasSprints() ? 6 : 5">
+                  Did not take part
+                </td>
               }
             </tr>
           }

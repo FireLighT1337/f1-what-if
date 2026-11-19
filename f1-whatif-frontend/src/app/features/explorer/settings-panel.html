@@ -1,4 +1,7 @@
-<section aria-label="Scenario settings" class="space-y-6 rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+<section
+  aria-label="Scenario settings"
+  class="space-y-6 rounded-lg border border-zinc-800 bg-zinc-900 p-4"
+>
   <div>
     <label for="season" class="mb-1 block text-sm font-medium text-zinc-300">Season</label>
     <select
@@ -22,7 +25,9 @@
       (change)="onRuleset($event)"
     >
       @for (item of rulesets(); track item.code) {
-        <option [value]="item.code" [selected]="item.code === rulesetCode()">{{ item.name }}</option>
+        <option [value]="item.code" [selected]="item.code === rulesetCode()">
+          {{ item.name }}
+        </option>
       }
     </select>
     @if (selectedRulesetDescription(); as description) {
@@ -33,7 +38,10 @@
         <summary class="cursor-pointer text-zinc-300">Points table</summary>
         <ul class="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 tabular-nums">
           @for (entry of racePoints(); track entry.label) {
-            <li class="flex justify-between"><span>{{ entry.label }}</span><span>{{ entry.points }}</span></li>
+            <li class="flex justify-between">
+              <span>{{ entry.label }}</span
+              ><span>{{ entry.points }}</span>
+            </li>
           }
         </ul>
         @if (sprintPoints().length > 0) {
@@ -114,7 +122,9 @@
     <ul class="max-h-56 space-y-0.5 overflow-y-auto pr-1">
       @for (driver of filteredDrivers(); track driver.id) {
         <li>
-          <label class="flex cursor-pointer items-start gap-2 rounded px-1 py-0.5 text-sm hover:bg-zinc-800">
+          <label
+            class="flex cursor-pointer items-start gap-2 rounded px-1 py-0.5 text-sm hover:bg-zinc-800"
+          >
             <input
               type="checkbox"
               class="mt-1 size-4 accent-red-600"
@@ -128,7 +138,9 @@
           </label>
         </li>
       } @empty {
-        <li class="text-sm text-zinc-500">{{ drivers().length === 0 ? 'Loading drivers…' : 'No drivers match.' }}</li>
+        <li class="text-sm text-zinc-500">
+          {{ drivers().length === 0 ? 'Loading drivers…' : 'No drivers match.' }}
+        </li>
       }
     </ul>
   </fieldset>
@@ -140,7 +152,9 @@
     <ul class="max-h-56 space-y-0.5 overflow-y-auto pr-1">
       @for (race of races(); track race.round) {
         <li>
-          <label class="flex cursor-pointer items-start gap-2 rounded px-1 py-0.5 text-sm hover:bg-zinc-800">
+          <label
+            class="flex cursor-pointer items-start gap-2 rounded px-1 py-0.5 text-sm hover:bg-zinc-800"
+          >
             <input
               type="checkbox"
               class="mt-1 size-4 accent-red-600"
@@ -150,7 +164,9 @@
             <span>
               Round {{ race.round }} · {{ race.name }}
               @if (race.hasSprint) {
-                <span class="ml-1 rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-300">Sprint</span>
+                <span class="ml-1 rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-300"
+                  >Sprint</span
+                >
               }
               @if (race.shortened) {
                 <span
@@ -171,7 +187,7 @@
   @if (hasExclusions()) {
     <button
       type="button"
-      class="text-sm text-zinc-400 underline hover:text-white"
+      class="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white"
       (click)="exclusionsClear.emit()"
     >
       Clear exclusions

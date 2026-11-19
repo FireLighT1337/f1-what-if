@@ -42,6 +42,20 @@
         <h1 id="results-heading" class="text-xl font-semibold">{{ heading() }}</h1>
         <p class="text-sm text-zinc-400">{{ subtitle() }}</p>
       </div>
+      @if (activeScenario(); as scenario) {
+        <p class="mb-3 text-sm text-zinc-400">Scenario: <span class="text-zinc-200">{{ scenario.name }}</span></p>
+      }
+      <div class="mb-4">
+        <app-scenario-save
+          [loggedIn]="loggedIn()"
+          [active]="activeScenario()"
+          [status]="saveStatus()"
+          [error]="saveError()"
+          [canSave]="canSave()"
+          (save)="onSave($event)"
+          (dismiss)="onSaveDismiss()"
+        />
+      </div>
       <div aria-live="polite">
         <app-standings-table [rows]="rows()" [season]="standings()?.season ?? null" [status]="status()" [error]="error()" />
       </div>

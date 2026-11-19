@@ -1,15 +1,66 @@
-<header class="border-b border-zinc-800 bg-zinc-900">
-  <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-    <a routerLink="/" class="flex items-center gap-3">
-      <span class="h-6 w-1.5 rounded-sm bg-f1-red" aria-hidden="true"></span>
-      <span class="text-lg font-semibold tracking-tight">F1 What-If</span>
-    </a>
-    <nav aria-label="Main" class="flex gap-4 text-sm text-zinc-400">
-      <a routerLink="/explorer" routerLinkActive="text-white" class="hover:text-white">Explorer</a>
-    </nav>
-  </div>
-</header>
+<div class="flex min-h-screen flex-col bg-zinc-950 text-white">
+  <header class="border-b border-zinc-800 bg-zinc-900">
+    <header class="border-b border-zinc-800 bg-zinc-900">
+      <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <a routerLink="/" class="flex items-center gap-3">
+          <span class="h-6 w-1.5 rounded-sm bg-f1-red" aria-hidden="true"></span>
+          <span class="text-lg font-semibold tracking-tight">F1 What-If</span>
+        </a>
+        <nav aria-label="Main" class="flex flex-wrap items-center gap-4 text-sm text-zinc-400">
+          <a routerLink="/explorer" routerLinkActive="text-white" class="hover:text-white"
+            >Explorer</a
+          >
+          @if (loggedIn()) {
+            <a routerLink="/scenarios" routerLinkActive="text-white" class="hover:text-white"
+              >My scenarios</a
+            >
+            @if (user(); as current) {
+              <span class="hidden text-zinc-500 sm:inline" data-testid="user-email">{{
+                current.email
+              }}</span>
+            }
+            <button type="button" class="hover:text-white" (click)="logout()">Log out</button>
+          } @else {
+            <a routerLink="/login" routerLinkActive="text-white" class="hover:text-white">Log in</a>
+            <a
+              routerLink="/register"
+              class="rounded-md bg-f1-red px-3 py-1 text-white hover:opacity-90"
+              >Sign up</a
+            >
+          }
+        </nav>
+      </div>
+    </header>
+  </header>
 
-<main class="mx-auto max-w-7xl px-4 py-6">
-  <router-outlet />
-</main>
+  <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
+    <router-outlet />
+  </main>
+
+  <footer class="border-t border-zinc-800 bg-zinc-900">
+    <div class="mx-auto max-w-7xl px-4 py-5">
+      <div
+        class="flex flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left"
+      >
+        <div class="flex items-center gap-2 text-sm">
+          <span class="font-semibold text-zinc-200">Asad Sardar</span>
+          <span class="text-zinc-500">© {{ currentYear }}</span>
+        </div>
+
+        <div class="flex items-center gap-4 text-sm text-zinc-400">
+          <a
+            href="https://github.com/FireLighT1337"
+            target="_blank"
+            rel="noreferrer"
+            class="transition-colors hover:text-white"
+          >
+            GitHub
+          </a>
+          <a href="mailto:asadsardar35@gmail.com" class="transition-colors hover:text-white">
+            Email
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>

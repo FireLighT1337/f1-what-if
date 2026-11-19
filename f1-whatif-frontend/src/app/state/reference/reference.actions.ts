@@ -4,6 +4,9 @@ import { RaceInfo, RulesetDetail, RulesetSummary, SeasonDriver, SeasonSummary } 
 export const ReferenceActions = createActionGroup({
   source: 'Reference',
   events: {
+    /** Pages that only need the names of the points systems ask for them without loading everything. */
+    'Rulesets Needed': emptyProps(),
+    'Rulesets Loaded': props<{ rulesets: RulesetSummary[] }>(),
     'Initial Load Requested': emptyProps(),
     'Initial Load Succeeded': props<{ seasons: SeasonSummary[]; rulesets: RulesetSummary[] }>(),
     'Initial Load Failed': props<{ error: string }>(),

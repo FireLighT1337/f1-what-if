@@ -29,6 +29,7 @@ export const referenceFeature = createFeature({
   name: 'reference',
   reducer: createReducer(
     initialReferenceState,
+    on(ReferenceActions.rulesetsLoaded, (state, { rulesets }) => ({ ...state, rulesets })),
     on(ReferenceActions.initialLoadRequested, (state) => ({ ...state, status: 'loading' as const, error: null })),
     on(ReferenceActions.initialLoadSucceeded, (state, { seasons, rulesets }) => ({
       ...state,

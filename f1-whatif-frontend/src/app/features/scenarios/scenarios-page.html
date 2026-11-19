@@ -1,0 +1,108 @@
+<h1 class="mb-1 text-2xl font-semibold">My scenarios</h1>
+<p class="mb-6 text-sm text-zinc-400">
+  Open a scenario in the explorer, share it with a link, or delete it.
+</p>
+
+@if (error(); as message) {
+  <p
+    role="alert"
+    class="mb-4 rounded-lg border border-red-900 bg-red-950/50 p-3 text-sm text-red-200"
+  >
+    {{ message }}
+  </p>
+}
+
+@if (status() === 'loading' && items().length === 0) {
+  <div class="space-y-3" aria-busy="true" aria-label="Loading scenarios">
+    @for (placeholder of [1, 2, 3]; track placeholder) {
+      <div class="h-20 animate-pulse rounded-lg bg-zinc-900"></div>
+    }
+  </div>
+} @else if (items().length === 0 && status() !== 'error') {
+  <div class="rounded-lg border border-zinc-800 p-6 text-sm text-zinc-400">
+    <p>You have not saved any scenarios yet.</p>
+    <p class="mt-2">
+      <a routerLink="/explorer" class="text-white underline">Open the explorer</a>
+      and use “Save scenario” to keep one.
+    </p>
+  </div>
+} @else {
+  <ul class="space-y-3">
+    @for (scenario of items(); track scenario.id) {
+      <li class="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <h2 class="truncate text-lg font-medium">{{ scenario.name }}</h2>
+            <p class="text-sm text-zinc-400">{{ summary(scenario) }}</p>
+            <p class="mt-1 text-xs text-zinc-500">
+              Updated {{ scenario.updatedAt | date: 'd MMM y, HH:mm' }}
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-sm">
+            <button
+              type="button"
+              class="rounded-md bg-f1-red px-3 py-1.5 text-white hover:opacity-90"
+              (click)="open(scenario)"
+            >
+              Open
+            </button>
+            <button
+              type="button"
+              class="rounded-md border border-zinc-700 px-3 py-1.5 hover:border-zinc-500"
+              (click)="toggleShare(scenario)"
+            >
+              {{ scenario.publicId ? 'Stop sharing' : 'Share' }}
+            </button>
+            @if (confirmingDelete() === scenario.id) {
+              <span class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="rounded-md border border-red-800 px-3 py-1.5 text-red-300 hover:bg-red-950"
+                  (click)="confirmDelete(scenario.id)"
+                >
+                  Delete for good
+                </button>
+                <button
+                  type="button"
+                  class="rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white"
+                  (click)="cancelDelete()"
+                >
+                  Cancel
+                </button>
+              </span>
+            } @else {
+              <button
+                type="button"
+                class="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-300 hover:border-red-800 hover:text-red-300"
+                (click)="askDelete(scenario.id)"
+              >
+                Delete
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (scenario.publicId) {
+          <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <label [for]="'link-' + scenario.id" class="text-zinc-400">Link</label>
+            <input
+              [id]="'link-' + scenario.id"
+              type="text"
+              readonly
+              [value]="shareLink(scenario)"
+              (focus)="$any($event.target).select()"
+              class="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-zinc-300"
+            />
+            <button
+              type="button"
+              class="rounded-md border border-zinc-700 px-3 py-1 hover:border-zinc-500"
+              (click)="copyLink(scenario)"
+            >
+              {{ copied() === scenario.id ? 'Copied' : 'Copy' }}
+            </button>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+}

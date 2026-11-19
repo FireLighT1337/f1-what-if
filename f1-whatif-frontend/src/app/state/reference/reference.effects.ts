@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { catchError, filter, forkJoin, map, merge, of, switchMap, withLatestFrom } from 'rxjs';
+import { EMPTY, catchError, filter, forkJoin, map, merge, of, switchMap, withLatestFrom } from 'rxjs';
 import { describeError } from '../../core/describe-error';
 import { F1Api } from '../../core/f1-api';
 import { ExplorerActions } from '../explorer/explorer.actions';
@@ -15,6 +15,22 @@ export class ReferenceEffects {
   private readonly actions$ = inject(Actions);
   private readonly store = inject(Store);
   private readonly api = inject(F1Api);
+
+  /** Names of the points systems for pages that do not load the whole explorer data. */
+  readonly loadRulesets$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ReferenceActions.rulesetsNeeded),
+      withLatestFrom(this.store.select(referenceFeature.selectRulesets)),
+      filter(([, rulesets]) => rulesets.length === 0),
+      switchMap(() =>
+        this.api.rulesets().pipe(
+          map((rulesets) => ReferenceActions.rulesetsLoaded({ rulesets })),
+          // The names are a nicety; the pages fall back to the codes.
+          catchError(() => EMPTY),
+        ),
+      ),
+    ),
+  );
 
   /** Opening the explorer starts the first load, unless it is already loaded or running. */
   readonly requestInitialLoad$ = createEffect(() =>
@@ -46,6 +62,10 @@ export class ReferenceEffects {
         map(({ year }) => year),
       ),
       this.actions$.pipe(
+        ofType(ExplorerActions.scenarioOpened),
+        map(({ scenario }) => scenario.seasonYear),
+      ),
+      this.actions$.pipe(
         ofType(ReferenceActions.initialLoadSucceeded),
         withLatestFrom(this.store.select(explorerFeature.selectSeason)),
         map(([, season]) => season),
@@ -72,6 +92,10 @@ export class ReferenceEffects {
       this.actions$.pipe(
         ofType(ExplorerActions.rulesetChanged),
         map(({ code }) => code),
+      ),
+      this.actions$.pipe(
+        ofType(ExplorerActions.scenarioOpened),
+        map(({ scenario }) => scenario.rulesetCode),
       ),
       this.actions$.pipe(
         ofType(ReferenceActions.initialLoadSucceeded),

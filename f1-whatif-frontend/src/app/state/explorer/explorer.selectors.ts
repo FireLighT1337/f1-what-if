@@ -1,5 +1,5 @@
 import { createSelector } from '@ngrx/store';
-import { RaceInfo, RulesetDetail, SeasonDriver, StandingsQuery } from '../../core/models';
+import { RaceInfo, RulesetDetail, ScenarioRequest, SeasonDriver, StandingsQuery } from '../../core/models';
 import { referenceFeature } from '../reference/reference.reducer';
 import { explorerFeature } from './explorer.reducer';
 
@@ -37,6 +37,10 @@ export const selectStandingsQuery = createSelector(
     if (season === null || ruleset === null) {
       return null;
     }
+    // Excluded rounds cannot be turned into race ids before the races of the season are loaded.
+    if (excludedRounds.length > 0 && races.length === 0) {
+      return null;
+    }
     const idByRound = new Map(races.map((race) => [race.round, race.id]));
     const excludeRaces = excludedRounds
       .map((round) => idByRound.get(round))
@@ -50,4 +54,18 @@ export const selectStandingsQuery = createSelector(
       excludeRaces,
     };
   },
+);
+
+/** Everything about the current selection that a saved scenario stores, except its name. */
+export const selectScenarioDraft = createSelector(
+  explorerFeature.selectSeason,
+  explorerFeature.selectRulesetCode,
+  explorerFeature.selectIncludeSprints,
+  explorerFeature.selectCountBest,
+  explorerFeature.selectExcludedDriverIds,
+  explorerFeature.selectExcludedRounds,
+  (season, ruleset, includeSprints, countBest, excludedDriverIds, excludedRounds): Omit<ScenarioRequest, 'name'> | null =>
+    season === null || ruleset === null
+      ? null
+      : { seasonYear: season, rulesetCode: ruleset, includeSprints, countBest, excludedDriverIds, excludedRounds },
 );

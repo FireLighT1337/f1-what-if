@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { StandingsResponse } from '../../core/models';
+import { ScenarioResponse, StandingsResponse } from '../../core/models';
 
 export const ExplorerActions = createActionGroup({
   source: 'Explorer',
@@ -12,6 +12,8 @@ export const ExplorerActions = createActionGroup({
     'Driver Exclusion Toggled': props<{ driverId: number }>(),
     'Round Exclusion Toggled': props<{ round: number }>(),
     'Exclusions Cleared': emptyProps(),
+    /** Loads a saved or shared scenario into the explorer; owned scenarios can then be updated. */
+    'Scenario Opened': props<{ scenario: ScenarioResponse; owned: boolean }>(),
     'Standings Succeeded': props<{ response: StandingsResponse }>(),
     'Standings Failed': props<{ error: string }>(),
   },
