@@ -21,10 +21,12 @@ import org.springframework.web.context.request.ServletRequestAttributes;
  * Enforces {@link RateLimited}. Clients are told apart by IP address; the addresses are only
  * kept in memory for the length of the window and are never logged.
  *
- * Settings: app.rate-limit.enabled (default true) and app.rate-limit.trust-forwarded-for
- * (default false). Behind a reverse proxy the remote address is the proxy's, so turn the
- * second one on there, but only if the proxy sets X-Forwarded-For itself; the last address
- * in that header is the one the proxy added, and the earlier ones can be forged by clients.
+ * Settings: app.rate-limit.enabled (default true), app.rate-limit.trust-forwarded-for
+ * (default false) and app.rate-limit.proxies-to-skip (default 0). Behind a reverse proxy the
+ * remote address is the proxy's, so turn trust-forwarded-for on there, but only if the proxy
+ * sets X-Forwarded-For itself. The visitor is found counting from the right end of that header
+ * (see {@link ClientAddress}); proxies-to-skip is the number of your own proxies in front of
+ * the visitor's address, for example 1 when a Vercel rewrite sits in front of Cloud Run.
  */
 @Aspect
 @Component
@@ -35,12 +37,15 @@ public class RateLimitAspect {
 
     private final boolean enabled;
     private final boolean trustForwardedFor;
+    private final int proxiesToSkip;
     private final ConcurrentMap<String, FixedWindowRateLimiter> limiters = new ConcurrentHashMap<>();
 
     public RateLimitAspect(@Value("${app.rate-limit.enabled:true}") boolean enabled,
-                           @Value("${app.rate-limit.trust-forwarded-for:false}") boolean trustForwardedFor) {
+                           @Value("${app.rate-limit.trust-forwarded-for:false}") boolean trustForwardedFor,
+                           @Value("${app.rate-limit.proxies-to-skip:0}") int proxiesToSkip) {
         this.enabled = enabled;
         this.trustForwardedFor = trustForwardedFor;
+        this.proxiesToSkip = proxiesToSkip;
     }
 
     @Around("@annotation(rateLimited)")
@@ -67,13 +72,7 @@ public class RateLimitAspect {
     }
 
     private String clientKey(HttpServletRequest request) {
-        if (trustForwardedFor) {
-            String header = request.getHeader("X-Forwarded-For");
-            if (header != null && !header.isBlank()) {
-                String[] hops = header.split(",");
-                return hops[hops.length - 1].trim();
-            }
-        }
-        return request.getRemoteAddr();
+        return ClientAddress.of(request.getHeader("X-Forwarded-For"), request.getRemoteAddr(),
+                trustForwardedFor, proxiesToSkip);
     }
 }

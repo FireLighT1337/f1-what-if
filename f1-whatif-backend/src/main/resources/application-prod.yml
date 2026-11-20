@@ -1,0 +1,35 @@
+# Used when SPRING_PROFILES_ACTIVE=prod (the Docker image sets it).
+# Values without a default must be provided as environment variables; the app refuses to start without them.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    hikari:
+      # A small pool: the free database tier allows few connections, and one instance handles little traffic.
+      maximum-pool-size: 5
+      minimum-idle: 0
+      connection-timeout: 10000
+      # Shorter than the time after which the database or a network device may close an idle connection.
+      max-lifetime: 1500000
+  jpa:
+    hibernate:
+      # Flyway owns the schema and is already checked when the app starts. Skipping Hibernate's own
+      # check saves many metadata queries on every start of a container.
+      ddl-auto: none
+
+server:
+  shutdown: graceful
+
+spring.lifecycle.timeout-per-shutdown-phase: 20s
+
+app:
+  security:
+    jwt:
+      # No default on purpose: a forgotten secret must stop the app instead of using a public one.
+      secret: ${JWT_SECRET}
+
+management:
+  endpoint:
+    health:
+      show-details: never

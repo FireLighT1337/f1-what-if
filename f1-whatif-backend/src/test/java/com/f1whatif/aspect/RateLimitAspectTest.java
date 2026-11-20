@@ -57,7 +57,7 @@ class RateLimitAspectTest {
 
     @Test
     void callsTheMethodWhileUnderTheLimit() throws Throwable {
-        RateLimitAspect aspect = new RateLimitAspect(true, false);
+        RateLimitAspect aspect = new RateLimitAspect(true, false, 0);
         ProceedingJoinPoint joinPoint = joinPoint();
         requestFrom("1.1.1.1", null);
 
@@ -69,7 +69,7 @@ class RateLimitAspectTest {
 
     @Test
     void rejectsWithTooManyRequestsOnceTheLimitIsReached() throws Throwable {
-        RateLimitAspect aspect = new RateLimitAspect(true, false);
+        RateLimitAspect aspect = new RateLimitAspect(true, false, 0);
         ProceedingJoinPoint joinPoint = joinPoint();
         requestFrom("1.1.1.1", null);
         aspect.limit(joinPoint, annotation);
@@ -85,7 +85,7 @@ class RateLimitAspectTest {
 
     @Test
     void countsEachAddressSeparately() throws Throwable {
-        RateLimitAspect aspect = new RateLimitAspect(true, false);
+        RateLimitAspect aspect = new RateLimitAspect(true, false, 0);
         ProceedingJoinPoint joinPoint = joinPoint();
         requestFrom("1.1.1.1", null);
         aspect.limit(joinPoint, annotation);
@@ -98,7 +98,7 @@ class RateLimitAspectTest {
 
     @Test
     void usesTheLastForwardedAddressWhenItIsTrusted() throws Throwable {
-        RateLimitAspect aspect = new RateLimitAspect(true, true);
+        RateLimitAspect aspect = new RateLimitAspect(true, true, 0);
         ProceedingJoinPoint joinPoint = joinPoint();
         // Different proxy addresses and forged first hops, but the same address added by the proxy.
         requestFrom("10.0.0.1", "6.6.6.6, 9.9.9.9");
@@ -112,7 +112,7 @@ class RateLimitAspectTest {
 
     @Test
     void ignoresTheForwardedHeaderUnlessItIsTrusted() throws Throwable {
-        RateLimitAspect aspect = new RateLimitAspect(true, false);
+        RateLimitAspect aspect = new RateLimitAspect(true, false, 0);
         ProceedingJoinPoint joinPoint = joinPoint();
         requestFrom("1.1.1.1", "5.5.5.5");
         aspect.limit(joinPoint, annotation);
@@ -124,7 +124,7 @@ class RateLimitAspectTest {
 
     @Test
     void doesNothingWhenDisabled() throws Throwable {
-        RateLimitAspect aspect = new RateLimitAspect(false, false);
+        RateLimitAspect aspect = new RateLimitAspect(false, false, 0);
         ProceedingJoinPoint joinPoint = joinPoint();
         requestFrom("1.1.1.1", null);
 
@@ -135,8 +135,22 @@ class RateLimitAspectTest {
 
     @Test
     void callsTheMethodWhenThereIsNoRequest() throws Throwable {
-        RateLimitAspect aspect = new RateLimitAspect(true, false);
+        RateLimitAspect aspect = new RateLimitAspect(true, false, 0);
 
         assertEquals("ok", aspect.limit(joinPoint(), annotation));
+    }
+
+    @Test
+    void skipsTheProxiesInFrontWhenTheVisitorIsFurtherLeftInTheHeader() throws Throwable {
+        // The last entry is added by the second proxy (for example Vercel); the visitor is the one before it.
+        RateLimitAspect aspect = new RateLimitAspect(true, true, 1);
+        ProceedingJoinPoint joinPoint = joinPoint();
+        requestFrom("10.0.0.1", "1.1.1.1, 203.0.113.7");
+        aspect.limit(joinPoint, annotation);
+        requestFrom("10.0.0.2", "1.1.1.1, 203.0.113.8");
+        aspect.limit(joinPoint, annotation);
+        requestFrom("10.0.0.3", "1.1.1.1, 203.0.113.9");
+
+        assertThrows(TooManyRequestsException.class, () -> aspect.limit(joinPoint, annotation));
     }
 }
