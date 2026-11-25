@@ -5,7 +5,8 @@ export const ExplorerActions = createActionGroup({
   source: 'Explorer',
   events: {
     Opened: emptyProps(),
-    'Season Changed': props<{ year: number }>(),
+    /** `rulesetCode` is the season's own points system; without it the current one stays selected. */
+    'Season Changed': props<{ year: number; rulesetCode?: string | null }>(),
     'Ruleset Changed': props<{ code: string }>(),
     'Include Sprints Changed': props<{ value: boolean }>(),
     'Count Best Changed': props<{ value: number | null }>(),

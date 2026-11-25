@@ -58,6 +58,22 @@ describe('explorer reducer', () => {
     expect(state.excludedRounds).toEqual([]);
   });
 
+  it("switches to the season's own points system when the season change carries one", () => {
+    const chosen: ExplorerState = { ...initialExplorerState, season: 2026, rulesetCode: DEFAULT_RULESET };
+
+    const state = reduce(chosen, ExplorerActions.seasonChanged({ year: 1980, rulesetCode: 'classic-1961' }));
+
+    expect(state.rulesetCode).toBe('classic-1961');
+  });
+
+  it('keeps the selected points system when the season change carries none', () => {
+    const chosen: ExplorerState = { ...initialExplorerState, season: 2026, rulesetCode: DEFAULT_RULESET };
+
+    const state = reduce(chosen, ExplorerActions.seasonChanged({ year: 1980 }));
+
+    expect(state.rulesetCode).toBe(DEFAULT_RULESET);
+  });
+
   it('toggles a driver exclusion on and off', () => {
     const on = reduce(initialExplorerState, ExplorerActions.driverExclusionToggled({ driverId: 7 }));
     const off = reduce(on, ExplorerActions.driverExclusionToggled({ driverId: 7 }));

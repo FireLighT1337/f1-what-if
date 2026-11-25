@@ -80,10 +80,11 @@ export const explorerFeature = createFeature({
         ? { ...initialExplorerState }
         : { ...initialExplorerState, ...defaults, ...recalculating };
     }),
-    // Drivers and rounds belong to one season, so changing the season clears them.
-    on(ExplorerActions.seasonChanged, (state, { year }) => ({
+    // Drivers and rounds belong to one season, so changing the season clears them; the points system follows the season.
+    on(ExplorerActions.seasonChanged, (state, { year, rulesetCode }) => ({
       ...state,
       season: year,
+      rulesetCode: rulesetCode ?? state.rulesetCode,
       excludedDriverIds: [],
       excludedRounds: [],
       ...recalculating,

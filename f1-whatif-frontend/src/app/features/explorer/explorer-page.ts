@@ -12,6 +12,7 @@ import { selectIsLoggedIn } from '../../state/auth/auth.selectors';
 import { ScenariosActions } from '../../state/scenarios/scenarios.actions';
 import { scenariosFeature } from '../../state/scenarios/scenarios.reducer';
 import { toQueryParams } from '../../core/scenario-query';
+import { rulesetForSeason } from '../../core/season-ruleset';
 import { ScenarioSave, SaveRequest } from './scenario-save';
 import { SettingsPanel } from './settings-panel';
 import { StandingsTable } from './standings-table';
@@ -82,7 +83,7 @@ export class ExplorerPage implements OnInit {
   }
 
   protected onSeason(year: number): void {
-    this.store.dispatch(ExplorerActions.seasonChanged({ year }));
+    this.store.dispatch(ExplorerActions.seasonChanged({ year, rulesetCode: rulesetForSeason(year, this.rulesets()) }));
   }
 
   protected onRuleset(code: string): void {

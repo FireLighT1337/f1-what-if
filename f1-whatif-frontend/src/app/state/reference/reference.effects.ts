@@ -94,6 +94,10 @@ export class ReferenceEffects {
         map(({ code }) => code),
       ),
       this.actions$.pipe(
+        ofType(ExplorerActions.seasonChanged),
+        map(({ rulesetCode }) => rulesetCode ?? null),
+      ),
+      this.actions$.pipe(
         ofType(ExplorerActions.scenarioOpened),
         map(({ scenario }) => scenario.rulesetCode),
       ),
