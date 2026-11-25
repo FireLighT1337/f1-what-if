@@ -3,6 +3,7 @@ package com.f1whatif.scoring;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,17 +51,7 @@ public final class StandingsCalculator {
         List<DriverTally> sorted = new ArrayList<>(tallies.values());
         sorted.sort((a, b) -> {
             int byPoints = Double.compare(totals.get(b.driverId), totals.get(a.driverId));
-            if (byPoints != 0) {
-                return byPoints;
-            }
-            // Countback: most wins, then most second places, and so on.
-            for (int p = 1; p <= COUNTBACK_DEPTH; p++) {
-                int byCount = Integer.compare(b.finishes[p], a.finishes[p]);
-                if (byCount != 0) {
-                    return byCount;
-                }
-            }
-            return Long.compare(a.driverId, b.driverId);
+            return byPoints != 0 ? byPoints : compareByCountback(a.finishes, a.driverId, b.finishes, b.driverId);
         });
 
         List<StandingRow> rows = new ArrayList<>();
@@ -69,6 +60,108 @@ public final class StandingsCalculator {
             rows.add(new StandingRow(rank++, tally.driverId, totals.get(tally.driverId)));
         }
         return rows;
+    }
+
+    /**
+     * Ranks drivers by points that are given rather than calculated, for example the points that were
+     * really awarded, and breaks ties exactly like {@link #driverStandings}. This keeps the real standings
+     * and a what-if calculation comparable: without it, drivers on equal points could appear to swap
+     * places only because the two rankings split the tie differently.
+     */
+    public List<StandingRow> rankByPoints(List<ResultEntry> results, Map<Long, Double> pointsByDriver) {
+        Map<Long, int[]> finishesByDriver = new HashMap<>();
+        for (ResultEntry entry : results) {
+            Integer position = entry.position();
+            if (!entry.sprint() && position != null && position >= 1 && position <= COUNTBACK_DEPTH
+                    && pointsByDriver.containsKey(entry.driverId())) {
+                finishesByDriver.computeIfAbsent(entry.driverId(), id -> new int[COUNTBACK_DEPTH + 1])[position]++;
+            }
+        }
+
+        int[] none = new int[COUNTBACK_DEPTH + 1];
+        List<Long> drivers = new ArrayList<>(pointsByDriver.keySet());
+        drivers.sort((a, b) -> {
+            int byPoints = Double.compare(pointsByDriver.get(b), pointsByDriver.get(a));
+            return byPoints != 0
+                    ? byPoints
+                    : compareByCountback(finishesByDriver.getOrDefault(a, none), a, finishesByDriver.getOrDefault(b, none), b);
+        });
+
+        List<StandingRow> rows = new ArrayList<>();
+        int rank = 1;
+        for (Long driverId : drivers) {
+            rows.add(new StandingRow(rank++, driverId, pointsByDriver.get(driverId)));
+        }
+        return rows;
+    }
+
+    /**
+     * How one driver scored in every round under a scenario, and where that leaves them.
+     *
+     * @return null when the driver does not appear in the scenario (excluded, or no results left)
+     */
+    public DriverBreakdown driverBreakdown(
+            List<ResultEntry> results, ScoringRules rules, ScoringOptions options,
+            Map<Long, RaceDistance> distances, long driverId) {
+
+        StandingRow standing = driverStandings(results, rules, options, distances).stream()
+                .filter(row -> row.driverId() == driverId)
+                .findFirst()
+                .orElse(null);
+        if (standing == null) {
+            return null;
+        }
+
+        record Parts(Integer racePosition, double racePoints, boolean hasRace,
+                     Integer sprintPosition, double sprintPoints, boolean hasSprint) {
+        }
+        Map<Integer, Parts> byRound = new TreeMap<>();
+        for (ResultEntry entry : prepare(results, options)) {
+            if (entry.driverId() != driverId) {
+                continue;
+            }
+            RaceAdjustment adjustment = entry.sprint()
+                    ? RaceAdjustment.FULL
+                    : rules.shortenedPolicy().adjustmentFor(distances.get(entry.raceId()));
+            double points = pointsFor(entry, rules, adjustment);
+            Parts current = byRound.getOrDefault(entry.round(), new Parts(null, 0, false, null, 0, false));
+            byRound.put(entry.round(), entry.sprint()
+                    ? new Parts(current.racePosition(), current.racePoints(), current.hasRace(), entry.position(), points, true)
+                    : new Parts(entry.position(), points, true, current.sprintPosition(), current.sprintPoints(), current.hasSprint()));
+        }
+
+        // With "best N results count", the N rounds with the most points are the ones that count.
+        Set<Integer> counted = new HashSet<>();
+        List<Map.Entry<Integer, Parts>> byPoints = new ArrayList<>(byRound.entrySet());
+        byPoints.sort((a, b) -> {
+            int comparison = Double.compare(
+                    b.getValue().racePoints() + b.getValue().sprintPoints(),
+                    a.getValue().racePoints() + a.getValue().sprintPoints());
+            return comparison != 0 ? comparison : Integer.compare(a.getKey(), b.getKey());
+        });
+        int limit = options.countBest() == null ? byPoints.size() : Math.min(options.countBest(), byPoints.size());
+        for (int i = 0; i < limit; i++) {
+            counted.add(byPoints.get(i).getKey());
+        }
+
+        List<RoundBreakdown> rounds = new ArrayList<>();
+        for (Map.Entry<Integer, Parts> entry : byRound.entrySet()) {
+            Parts parts = entry.getValue();
+            rounds.add(new RoundBreakdown(entry.getKey(), parts.hasRace(), parts.racePosition(), parts.racePoints(),
+                    parts.hasSprint(), parts.sprintPosition(), parts.sprintPoints(), counted.contains(entry.getKey())));
+        }
+        return new DriverBreakdown(standing.rank(), standing.points(), rounds);
+    }
+
+    /** Countback: most wins, then most second places, and so on; the driver id only settles exact ties. */
+    private static int compareByCountback(int[] finishesA, long idA, int[] finishesB, long idB) {
+        for (int p = 1; p <= COUNTBACK_DEPTH; p++) {
+            int byCount = Integer.compare(finishesB[p], finishesA[p]);
+            if (byCount != 0) {
+                return byCount;
+            }
+        }
+        return Long.compare(idA, idB);
     }
 
     /** Applies race, sprint and driver exclusions. */

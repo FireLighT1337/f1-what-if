@@ -34,14 +34,14 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     @RateLimited(maxRequests = 5, windowSeconds = 3600)
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
-        return UserResponse.from(authService.register(request.email(), request.password()));
+        return UserResponse.from(authService.register(request.username(), request.password()));
     }
 
     /** At most 10 login attempts per minute from one address. */
     @PostMapping("/login")
     @RateLimited(maxRequests = 10, windowSeconds = 60)
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request.email(), request.password());
+        return authService.login(request.username(), request.password());
     }
 
     /**
@@ -53,6 +53,6 @@ public class AuthController {
     public UserResponse me(@AuthenticationPrincipal Jwt jwt) {
         List<String> roles = jwt.getClaimAsStringList("roles");
         String role = roles == null || roles.isEmpty() ? "USER" : roles.get(0);
-        return new UserResponse(CurrentUser.id(jwt), jwt.getClaimAsString("email"), role);
+        return new UserResponse(CurrentUser.id(jwt), jwt.getClaimAsString("username"), role);
     }
 }

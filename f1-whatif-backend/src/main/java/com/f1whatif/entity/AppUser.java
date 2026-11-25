@@ -20,8 +20,9 @@ public class AppUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Stored in lower case, so usernames are unique whatever their capitalisation. */
     @Column(nullable = false, unique = true, length = 254)
-    private String email;
+    private String username;
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
@@ -37,8 +38,8 @@ public class AppUser {
     protected AppUser() {
     }
 
-    public AppUser(String email, String passwordHash, Role role) {
-        this.email = email;
+    public AppUser(String username, String passwordHash, Role role) {
+        this.username = username;
         this.passwordHash = passwordHash;
         this.role = role;
     }
@@ -47,8 +48,8 @@ public class AppUser {
         return id;
     }
 
-    public String getEmail() {
-        return email;
+    public String getUsername() {
+        return username;
     }
 
     public String getPasswordHash() {
@@ -66,6 +67,6 @@ public class AppUser {
     /** The password hash is left out on purpose. */
     @Override
     public String toString() {
-        return "AppUser{id=" + id + ", email=" + email + ", role=" + role + "}";
+        return "AppUser{id=" + id + ", username=" + username + ", role=" + role + "}";
     }
 }

@@ -30,7 +30,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtEncoder jwtEncoder;
     private final Duration tokenLifetime;
-    /** Compared against when the email is unknown, so a login takes about as long either way. */
+    /** Compared against when the username is unknown, so a login takes about as long either way. */
     private final String dummyHash;
 
     public AuthService(AppUserRepository users, PasswordEncoder passwordEncoder, JwtEncoder jwtEncoder,
@@ -43,25 +43,25 @@ public class AuthService {
     }
 
     @Transactional
-    public AppUser register(String email, String password) {
-        String normalized = normalize(email);
-        if (users.existsByEmail(normalized)) {
-            throw emailTaken();
+    public AppUser register(String username, String password) {
+        String normalized = normalize(username);
+        if (users.existsByUsername(normalized)) {
+            throw usernameTaken();
         }
         try {
             return users.saveAndFlush(new AppUser(normalized, passwordEncoder.encode(password), Role.USER));
         } catch (DataIntegrityViolationException e) {
-            // Someone registered the same email between the check and the insert.
-            throw emailTaken();
+            // Someone registered the same username between the check and the insert.
+            throw usernameTaken();
         }
     }
 
-    public TokenResponse login(String email, String password) {
-        AppUser user = users.findByEmail(normalize(email)).orElse(null);
+    public TokenResponse login(String username, String password) {
+        AppUser user = users.findByUsername(normalize(username)).orElse(null);
         boolean passwordMatches = passwordEncoder.matches(password, user == null ? dummyHash : user.getPasswordHash());
         if (user == null || !passwordMatches) {
-            // Same message for an unknown email and a wrong password.
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+            // Same message for an unknown username and a wrong password.
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
         }
         return issueToken(user);
     }
@@ -73,7 +73,7 @@ public class AuthService {
                 .issuedAt(now)
                 .expiresAt(now.plus(tokenLifetime))
                 .subject(String.valueOf(user.getId()))
-                .claim("email", user.getEmail())
+                .claim("username", user.getUsername())
                 .claim("roles", List.of(user.getRole().name()))
                 .build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
@@ -81,11 +81,11 @@ public class AuthService {
         return new TokenResponse(token, "Bearer", tokenLifetime.toSeconds());
     }
 
-    private static String normalize(String email) {
-        return email.trim().toLowerCase(Locale.ROOT);
+    private static String normalize(String username) {
+        return username.trim().toLowerCase(Locale.ROOT);
     }
 
-    private static ResponseStatusException emailTaken() {
-        return new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered");
+    private static ResponseStatusException usernameTaken() {
+        return new ResponseStatusException(HttpStatus.CONFLICT, "Username is already taken");
     }
 }

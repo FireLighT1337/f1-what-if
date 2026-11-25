@@ -40,69 +40,69 @@ class AuthServiceTest {
     private final JwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
     private final AuthService service = new AuthService(users, passwordEncoder, jwtEncoder, 60);
 
-    private AppUser userWithId(long id, String email, String password) {
-        AppUser user = new AppUser(email, passwordEncoder.encode(password), Role.USER);
+    private AppUser userWithId(long id, String username, String password) {
+        AppUser user = new AppUser(username, passwordEncoder.encode(password), Role.USER);
         ReflectionTestUtils.setField(user, "id", id);
         return user;
     }
 
     @Test
-    void registerStoresTheEmailInLowerCaseAndOnlyAHashOfThePassword() {
-        when(users.existsByEmail("asad@example.com")).thenReturn(false);
+    void registerStoresTheUsernameInLowerCaseAndOnlyAHashOfThePassword() {
+        when(users.existsByUsername("asad")).thenReturn(false);
         when(users.saveAndFlush(any(AppUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AppUser saved = service.register("  Asad@Example.com ", "correct-horse");
+        AppUser saved = service.register("  Asad ", "correct-horse");
 
-        assertEquals("asad@example.com", saved.getEmail());
+        assertEquals("asad", saved.getUsername());
         assertTrue(!saved.getPasswordHash().equals("correct-horse"));
         assertTrue(passwordEncoder.matches("correct-horse", saved.getPasswordHash()));
         assertEquals(Role.USER, saved.getRole());
     }
 
     @Test
-    void registerRejectsAnEmailThatIsAlreadyTaken() {
-        when(users.existsByEmail("asad@example.com")).thenReturn(true);
+    void registerRejectsAUsernameThatIsAlreadyTaken() {
+        when(users.existsByUsername("asad")).thenReturn(true);
 
         ResponseStatusException error = assertThrows(ResponseStatusException.class,
-                () -> service.register("asad@example.com", "correct-horse"));
+                () -> service.register("asad", "correct-horse"));
 
         assertEquals(409, error.getStatusCode().value());
     }
 
     @Test
     void loginReturnsATokenForTheUser() {
-        when(users.findByEmail("asad@example.com"))
-                .thenReturn(Optional.of(userWithId(7, "asad@example.com", "correct-horse")));
+        when(users.findByUsername("asad"))
+                .thenReturn(Optional.of(userWithId(7, "asad", "correct-horse")));
 
-        TokenResponse token = service.login("Asad@Example.com", "correct-horse");
+        TokenResponse token = service.login("Asad", "correct-horse");
         Jwt jwt = jwtDecoder.decode(token.accessToken());
 
         assertEquals("Bearer", token.tokenType());
         assertEquals(3600L, token.expiresInSeconds());
         assertEquals("7", jwt.getSubject());
-        assertEquals("asad@example.com", jwt.getClaimAsString("email"));
+        assertEquals("asad", jwt.getClaimAsString("username"));
         assertEquals(List.of("USER"), jwt.getClaimAsStringList("roles"));
     }
 
     @Test
     void loginRejectsAWrongPassword() {
-        when(users.findByEmail("asad@example.com"))
-                .thenReturn(Optional.of(userWithId(7, "asad@example.com", "correct-horse")));
+        when(users.findByUsername("asad"))
+                .thenReturn(Optional.of(userWithId(7, "asad", "correct-horse")));
 
         ResponseStatusException error = assertThrows(ResponseStatusException.class,
-                () -> service.login("asad@example.com", "wrong-password"));
+                () -> service.login("asad", "wrong-password"));
 
         assertEquals(401, error.getStatusCode().value());
     }
 
     @Test
-    void loginRejectsAnUnknownEmailWithTheSameError() {
-        when(users.findByEmail("nobody@example.com")).thenReturn(Optional.empty());
+    void loginRejectsAnUnknownUsernameWithTheSameError() {
+        when(users.findByUsername("nobody")).thenReturn(Optional.empty());
 
         ResponseStatusException error = assertThrows(ResponseStatusException.class,
-                () -> service.login("nobody@example.com", "whatever-password"));
+                () -> service.login("nobody", "whatever-password"));
 
         assertEquals(401, error.getStatusCode().value());
-        assertEquals("Invalid email or password", error.getReason());
+        assertEquals("Invalid username or password", error.getReason());
     }
 }
