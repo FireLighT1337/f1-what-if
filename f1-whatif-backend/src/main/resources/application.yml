@@ -38,4 +38,4 @@ app:
       secret: ${JWT_SECRET:dev-only-secret-change-me-before-deploying-0123456789}
       expiry-minutes: 60
   wikimedia:
-    contact: ${https://github.com/FireLighT1337:}
+    contact: ${WIKIMEDIA_CONTACT:https://github.com/FireLighT1337}
