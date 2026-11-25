@@ -15,7 +15,7 @@ The API runs on http://localhost:8080. Flyway creates the tables on the first st
 
 ## Import data
 
-The database starts empty. The importer reads from the [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) and only runs with the `import` profile. It starts its web server on a random port, so it can run while the API is up. PowerShell:
+The database starts empty. The importer reads from the [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) and only runs with the `import` profile. It starts its web server on a random port, so it can run while the API is up. PowerShell example:
 
 ```
 $env:SPRING_PROFILES_ACTIVE = "import"

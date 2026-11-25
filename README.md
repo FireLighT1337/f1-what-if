@@ -49,17 +49,18 @@ mysql -u root -p < f1-whatif-backend/scripts/local-db-setup.sql
 
 ```
 cd f1-whatif-backend
-.\mvnw.cmd spring-boot:run        # Windows
+.\mvnw spring-boot:run        # Windows
 ./mvnw spring-boot:run            # macOS / Linux
 ```
 
-**3. Data.** The database starts empty. Import seasons with the `import` profile; it starts on a random port, so it can run while the API is up. PowerShell:
+**3. Data.** The database starts empty. Import seasons with the `import` profile; it starts on a random port, so it can run while the API is up. PowerShell example:
 
 ```
+$env:SPRING_PROFILES_ACTIVE = "import"
 $env:APP_IMPORT_FROM = "2018"
 $env:APP_IMPORT_TO = "2024"
 $env:APP_IMPORT_SKIP_EXISTING = "true"
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=import"
+.\mvnw spring-boot:run
 ```
 
 The importer waits between requests and stays under the API's hourly limit, so a full import from 1961 takes a while. With `skip-existing=true` a rerun continues where it stopped.
@@ -75,7 +76,7 @@ npm start
 ## Tests
 
 ```
-cd f1-whatif-backend && .\mvnw.cmd test
+cd f1-whatif-backend && .\mvnw test
 
 cd f1-whatif-frontend
 npm test                  # unit tests
