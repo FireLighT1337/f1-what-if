@@ -79,17 +79,41 @@
       <p class="-mt-2 text-xs text-zinc-500">This season had no sprint races.</p>
     }
 
-    <div>
-      <label class="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          class="size-4 accent-red-600"
-          [checked]="countBest() !== null"
-          (change)="onBestToggle($event)"
-        />
-        Only count each driver's best results
-      </label>
-      @if (countBest() !== null) {
+    <fieldset>
+      <legend class="mb-1 text-sm font-medium text-zinc-300">Results that count</legend>
+      <div class="space-y-1 text-sm">
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="counting"
+            class="size-4 accent-red-600"
+            [checked]="countingMode() === 'season'"
+            (change)="onCountingMode('season')"
+          />
+          Season's own rule
+        </label>
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="counting"
+            class="size-4 accent-red-600"
+            [checked]="countingMode() === 'all'"
+            (change)="onCountingMode('all')"
+          />
+          All results
+        </label>
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="counting"
+            class="size-4 accent-red-600"
+            [checked]="countingMode() === 'best'"
+            (change)="onCountingMode('best')"
+          />
+          Only each driver's best results
+        </label>
+      </div>
+      @if (countingMode() === 'best') {
         <div class="mt-2 flex items-center gap-2 text-sm">
           <label for="count-best" class="text-zinc-400">Best</label>
           <input
@@ -104,7 +128,7 @@
           <span class="text-zinc-400">of {{ races().length }} rounds</span>
         </div>
       }
-    </div>
+    </fieldset>
   </div>
 
   <fieldset>

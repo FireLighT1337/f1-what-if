@@ -124,12 +124,29 @@ describe('SettingsPanel', () => {
     const values: (number | null)[] = [];
     panel.countBestChange.subscribe((value) => values.push(value));
 
-    const box = Array.from(element.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')).find((b) =>
-      b.closest('label')?.textContent?.includes('best results'),
+    const radio = Array.from(element.querySelectorAll<HTMLInputElement>('input[type="radio"]')).find((r) =>
+      r.closest('label')?.textContent?.includes('best results'),
     )!;
-    box.click();
+    radio.click();
 
     expect(values).toEqual([3]);
+  });
+
+  it('offers the season rule, all results and best results, and emits null, 0 and a number', () => {
+    const { element, panel } = create({ races: [race(1), race(2), race(3), race(4), race(5)], countBest: 0 });
+    const values: (number | null)[] = [];
+    panel.countBestChange.subscribe((value) => values.push(value));
+
+    const radios = Array.from(element.querySelectorAll<HTMLInputElement>('input[type="radio"][name="counting"]'));
+    expect(radios.map((r) => r.closest('label')?.textContent?.trim())).toEqual([
+      "Season's own rule",
+      'All results',
+      "Only each driver's best results",
+    ]);
+    expect(radios.map((r) => r.checked)).toEqual([false, true, false]);
+
+    radios[0].click();
+    expect(values).toEqual([null]);
   });
 
   it('lists the points table in order of position', () => {

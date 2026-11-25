@@ -14,7 +14,7 @@ export function describeScenario(
     String(scenario.seasonYear),
     rulesetName,
     scenario.includeSprints ? null : 'no sprints',
-    scenario.countBest === null ? null : `best ${scenario.countBest}`,
+    scenario.countBest === null ? null : scenario.countBest === 0 ? 'all results' : `best ${scenario.countBest}`,
     exclusions === 0 ? null : `${exclusions} exclusion${exclusions === 1 ? '' : 's'}`,
   ];
   return parts.filter((part): part is string => part !== null).join(' · ');

@@ -24,6 +24,10 @@ describe('describeScenario', () => {
     expect(text).toBe('1984 · 1961-1990 · no sprints · best 11 · 3 exclusions');
   });
 
+  it('says "all results" when the season rule is switched off', () => {
+    expect(describeScenario({ ...base, countBest: 0 }, rulesets)).toBe('1984 · 1961-1990 · all results');
+  });
+
   it('uses the singular for one exclusion', () => {
     expect(describeScenario({ ...base, excludedRounds: [6] }, rulesets)).toContain('1 exclusion');
     expect(describeScenario({ ...base, excludedRounds: [6] }, rulesets)).not.toContain('exclusions');

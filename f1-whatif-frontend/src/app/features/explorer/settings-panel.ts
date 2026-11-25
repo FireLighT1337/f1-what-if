@@ -7,6 +7,8 @@ const POLICY_TEXT: Record<ShortenedPolicy, string> = {
   TIERED_2022: 'Races that ended early use reduced points tables below 25%, 50% and 75% of the distance.',
 };
 
+type CountingMode = 'season' | 'all' | 'best';
+
 /** 1 -> "1st", 2 -> "2nd", 11 -> "11th". */
 export function ordinal(n: number): string {
   const lastTwo = n % 100;
@@ -48,6 +50,12 @@ export class SettingsPanel {
   readonly rulesetChange = output<string>();
   readonly includeSprintsChange = output<boolean>();
   readonly countBestChange = output<number | null>();
+
+  /** null = the season's own rule, 0 = all results, N = best N results. */
+  protected readonly countingMode = computed<CountingMode>(() => {
+    const value = this.countBest();
+    return value === null ? 'season' : value === 0 ? 'all' : 'best';
+  });
   readonly driverToggle = output<number>();
   readonly roundToggle = output<number>();
   readonly exclusionsClear = output<void>();
@@ -102,10 +110,15 @@ export class SettingsPanel {
     this.includeSprintsChange.emit((event.target as HTMLInputElement).checked);
   }
 
-  protected onBestToggle(event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
-    // Start by ignoring each driver's two worst rounds, which is easy to adjust afterwards.
-    this.countBestChange.emit(checked ? Math.max(1, this.races().length - 2) : null);
+  protected onCountingMode(mode: CountingMode): void {
+    if (mode === 'season') {
+      this.countBestChange.emit(null);
+    } else if (mode === 'all') {
+      this.countBestChange.emit(0);
+    } else {
+      // Start by ignoring each driver's two worst rounds, which is easy to adjust afterwards.
+      this.countBestChange.emit(Math.max(1, this.races().length - 2));
+    }
   }
 
   protected onBestValue(event: Event): void {

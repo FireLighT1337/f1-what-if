@@ -50,7 +50,7 @@ export function fromQueryParams(query: Raw): ScenarioParams | null {
     return null;
   }
   const countBest = text(query['countBest']);
-  const best = countBest !== null && /^\d+$/.test(countBest) && Number(countBest) > 0 ? Number(countBest) : null;
+  const best = countBest !== null && /^\d+$/.test(countBest) && Number(countBest) >= 0 ? Number(countBest) : null;
   return {
     ruleset,
     includeSprints: text(query['includeSprints']) !== 'false',

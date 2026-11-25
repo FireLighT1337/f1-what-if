@@ -52,7 +52,8 @@ describe('scenario query parameters', () => {
     expect(params?.countBest).toBeNull();
     expect(params?.excludeDrivers).toEqual([3]);
     expect(params?.excludeRounds).toEqual([]);
-    expect(fromQueryParams({ ruleset: 'x', countBest: '0' })?.countBest).toBeNull();
+    expect(fromQueryParams({ ruleset: 'x', countBest: '0' })?.countBest).toBe(0);
+    expect(fromQueryParams({ ruleset: 'x', countBest: '-1' })?.countBest).toBeNull();
   });
 
   it('takes the first value when a parameter is repeated', () => {
