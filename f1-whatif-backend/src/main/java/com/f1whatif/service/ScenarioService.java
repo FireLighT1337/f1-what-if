@@ -11,7 +11,6 @@ import com.f1whatif.repository.RaceQueryRepository;
 import com.f1whatif.repository.ScenarioRepository;
 import com.f1whatif.repository.ScoringRulesetRepository;
 import com.f1whatif.repository.SeasonRepository;
-import com.f1whatif.scoring.ScoringOptions;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -128,9 +127,9 @@ public class ScenarioService {
                 }
             }
         }
-        ScoringOptions options = new ScoringOptions(scenario.isIncludeSprints(), scenario.getCountBest(),
+        StandingsQuery query = new StandingsQuery(scenario.getCountBest(), scenario.isIncludeSprints(),
                 scenario.getExcludedDriverIds(), excludedRaceIds);
-        return standingsService.standings(scenario.getSeasonYear(), scenario.getRulesetCode(), options);
+        return standingsService.standings(scenario.getSeasonYear(), scenario.getRulesetCode(), query);
     }
 
     private Scenario owned(long userId, long scenarioId) {

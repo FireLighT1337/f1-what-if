@@ -131,7 +131,7 @@ class StandingsCalculatorShortenedRaceTest {
     void excludingADriverStillAppliesTheShortenedRaceRule() {
         List<ResultEntry> results = List.of(race(1, 1, 1, 1), race(1, 1, 2, 2));
         Map<Long, RaceDistance> distances = Map.of(1L, new RaceDistance(44, 20, 20));
-        ScoringOptions options = new ScoringOptions(true, null, Set.of(1L), Set.of());
+        ScoringOptions options = new ScoringOptions(true, CountingRule.ALL, Set.of(1L), Set.of());
         ScoringRules rules = new ScoringRules(MODERN_TABLE, Map.of(), 0.0, false, ShortenedPolicy.HALF_1980);
 
         List<StandingRow> standings = calculator.driverStandings(results, rules, options, distances);

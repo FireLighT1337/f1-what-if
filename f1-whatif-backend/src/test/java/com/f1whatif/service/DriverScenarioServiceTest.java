@@ -22,8 +22,12 @@ import com.f1whatif.entity.RaceResult;
 import com.f1whatif.entity.ScoringRuleset;
 import com.f1whatif.entity.SessionType;
 import com.f1whatif.entity.Team;
+import com.f1whatif.entity.RaceMultiplier;
+import com.f1whatif.entity.SeasonRule;
+import com.f1whatif.repository.RaceMultiplierRepository;
 import com.f1whatif.repository.RaceResultRepository;
 import com.f1whatif.repository.ScoringRulesetRepository;
+import com.f1whatif.repository.SeasonRuleRepository;
 import com.f1whatif.repository.ShortenedRaceRepository;
 import com.f1whatif.scoring.ShortenedPolicy;
 import java.math.BigDecimal;
@@ -45,7 +49,10 @@ class DriverScenarioServiceTest {
     private final RaceResultRepository results = mock(RaceResultRepository.class);
     private final ScoringRulesetRepository rulesets = mock(ScoringRulesetRepository.class);
     private final ShortenedRaceRepository shortenedRaces = mock(ShortenedRaceRepository.class);
-    private final DriverScenarioService service = new DriverScenarioService(realResults, results, rulesets, shortenedRaces);
+    private final SeasonRuleRepository seasonRules = mock(SeasonRuleRepository.class);
+    private final RaceMultiplierRepository raceMultipliers = mock(RaceMultiplierRepository.class);
+    private final DriverScenarioService service = new DriverScenarioService(
+            realResults, results, rulesets, shortenedRaces, seasonRules, raceMultipliers);
 
     private final Team team = new Team("t", "Team", "X");
     private final List<Race> races = new ArrayList<>();
@@ -65,7 +72,8 @@ class DriverScenarioServiceTest {
     }
 
     private void result(Race race, Driver driver, SessionType session, Integer position) {
-        rows.add(new RaceResult(race, driver, team, session, 1, position, position == null ? "R" : String.valueOf(position),
+        rows.add(new RaceResult(race, driver, team, session, 1, position,
+                position == null ? "R" : String.valueOf(position),
                 "Finished", null, BigDecimal.ZERO));
     }
 
@@ -73,7 +81,8 @@ class DriverScenarioServiceTest {
         ScoringRuleset ruleset = mock(ScoringRuleset.class);
         when(ruleset.getCode()).thenReturn("test");
         when(ruleset.getName()).thenReturn("Test points");
-        when(ruleset.getRacePoints()).thenReturn(Map.of(1, new BigDecimal("25"), 2, new BigDecimal("18"), 3, new BigDecimal("15")));
+        when(ruleset.getRacePoints())
+                .thenReturn(Map.of(1, new BigDecimal("25"), 2, new BigDecimal("18"), 3, new BigDecimal("15")));
         when(ruleset.getSprintPoints()).thenReturn(Map.of(1, new BigDecimal("8")));
         when(ruleset.getFastestLapPoint()).thenReturn(BigDecimal.ZERO);
         when(ruleset.getShortenedPolicy()).thenReturn(ShortenedPolicy.NONE);
@@ -82,14 +91,19 @@ class DriverScenarioServiceTest {
         when(shortenedRaces.findBySeasonYear(1984)).thenReturn(List.of());
     }
 
-    /** What really happened for driver 2: second in round 1, did not race round 2, third in round 3. */
+    /**
+     * What really happened for driver 2: second in round 1, did not race round 2,
+     * third in round 3.
+     */
     private void givenRealSeasonOfDriver2() {
         DriverProfile profile = new DriverProfile(2, "Driver Two", null, null, null, null);
         List<DriverRaceResult> real = List.of(
-                new DriverRaceResult(1, "Race 1", null, false, true, "Team", 1, 2, "2", "Finished", new BigDecimal("18"),
+                new DriverRaceResult(1, "Race 1", null, false, true, "Team", 1, 2, "2", "Finished",
+                        new BigDecimal("18"),
                         new SprintResultInfo(1, 2, "2", new BigDecimal("7"))),
                 new DriverRaceResult(2, "Race 2", null, false, false, null, null, null, null, null, null, null),
-                new DriverRaceResult(3, "Race 3", null, false, true, "Team", 1, 3, "3", "Finished", new BigDecimal("15"), null));
+                new DriverRaceResult(3, "Race 3", null, false, true, "Team", 1, 3, "3", "Finished",
+                        new BigDecimal("15"), null));
         when(realResults.driverSeason(1984, 2)).thenReturn(
                 new DriverSeasonResponse(profile, 1984, new DriverSeasonSummary(2, 0, 2, new BigDecimal("40")), real));
     }
@@ -114,7 +128,8 @@ class DriverScenarioServiceTest {
         result(r3, three, SessionType.RACE, 2);
         result(r3, two, SessionType.RACE, 3);
 
-        // Without driver 1, driver 2 moves up to first in round 1 and second in round 3.
+        // Without driver 1, driver 2 moves up to first in round 1 and second in round
+        // 3.
         DriverScenarioResponse response = service.driverScenario(1984, 2, query(true, null, Set.of(1L), Set.of()));
 
         DriverScenarioRace first = response.races().get(0);
@@ -163,7 +178,8 @@ class DriverScenarioServiceTest {
         Race r1 = race(10, 1);
         result(r1, two, SessionType.RACE, 2);
 
-        DriverScenarioRace missed = service.driverScenario(1984, 2, query(true, null, Set.of(), Set.of())).races().get(1);
+        DriverScenarioRace missed = service.driverScenario(1984, 2, query(true, null, Set.of(), Set.of())).races()
+                .get(1);
 
         assertFalse(missed.entered());
         assertFalse(missed.excluded());
@@ -198,7 +214,8 @@ class DriverScenarioServiceTest {
         result(r1, two, SessionType.SPRINT, 1);
 
         DriverScenarioRace with = service.driverScenario(1984, 2, query(true, null, Set.of(), Set.of())).races().get(0);
-        DriverScenarioRace without = service.driverScenario(1984, 2, query(false, null, Set.of(), Set.of())).races().get(0);
+        DriverScenarioRace without = service.driverScenario(1984, 2, query(false, null, Set.of(), Set.of())).races()
+                .get(0);
 
         assertEquals(Integer.valueOf(1), with.sprint().finishPosition());
         assertEquals(8.0, with.sprint().points(), DELTA);
@@ -230,6 +247,45 @@ class DriverScenarioServiceTest {
 
     @Test
     void aSettingThatCannotBeRightIsRejected() {
-        assertThrows(IllegalArgumentException.class, () -> query(true, 0, Set.of(), Set.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> query(true, -1, Set.of(), Set.of()));
+    }
+
+    @Test
+    void usesTheSeasonRuleWhenCountBestIsNullAndAllResultsWhenZero() {
+        givenRuleset();
+        givenRealSeasonOfDriver2();
+        // season rule: only the best 1 round total counts
+        when(seasonRules.findById(1984)).thenReturn(Optional.of(new SeasonRule(1984, null, null, null, 1)));
+        Driver two = driver(2, "Two");
+        Race r1 = race(10, 1);
+        Race r3 = race(30, 3);
+        result(r1, two, SessionType.RACE, 1);
+        result(r3, two, SessionType.RACE, 2);
+
+        DriverScenarioResponse seasonRule = service.driverScenario(1984, 2, query(true, null, Set.of(), Set.of()));
+        assertEquals(25.0, seasonRule.summary().points(), DELTA);
+        assertTrue(seasonRule.races().get(0).counted());
+        assertFalse(seasonRule.races().get(2).counted());
+
+        DriverScenarioResponse all = service.driverScenario(1984, 2, query(true, 0, Set.of(), Set.of()));
+        assertEquals(43.0, all.summary().points(), DELTA);
+    }
+
+    @Test
+    void doublesRacePointsOfAMultiplierRound() {
+        givenRuleset();
+        givenRealSeasonOfDriver2();
+        when(raceMultipliers.findBySeasonYear(1984)).thenReturn(
+                List.of(new RaceMultiplier(1984, 3, new BigDecimal("2.00"), "double")));
+        Driver two = driver(2, "Two");
+        result(race(10, 1), two, SessionType.RACE, 1);
+        result(race(30, 3), two, SessionType.RACE, 2);
+
+        DriverScenarioResponse response = service.driverScenario(1984, 2, query(true, 0, Set.of(), Set.of()));
+
+        assertEquals(25.0, response.races().get(0).points(), DELTA);
+        assertEquals(36.0, response.races().get(2).points(), DELTA);
+        assertEquals(61.0, response.summary().points(), DELTA);
     }
 }

@@ -47,7 +47,7 @@ class StandingsCalculatorBreakdownTest {
     @Test
     void excludingADriverMovesTheOthersUpInEveryRace() {
         List<ResultEntry> results = List.of(race(1, 1, 1, 1), race(1, 1, 2, 2), race(1, 1, 3, 3));
-        ScoringOptions options = new ScoringOptions(true, null, Set.of(1L), Set.of());
+        ScoringOptions options = new ScoringOptions(true, CountingRule.ALL, Set.of(1L), Set.of());
 
         DriverBreakdown breakdown = calculator.driverBreakdown(results, RULES, options, Map.of(), 3);
 
@@ -59,7 +59,7 @@ class StandingsCalculatorBreakdownTest {
     @Test
     void anExcludedDriverHasNoBreakdown() {
         List<ResultEntry> results = List.of(race(1, 1, 1, 1), race(1, 1, 2, 2));
-        ScoringOptions options = new ScoringOptions(true, null, Set.of(1L), Set.of());
+        ScoringOptions options = new ScoringOptions(true, CountingRule.ALL, Set.of(1L), Set.of());
 
         assertNull(calculator.driverBreakdown(results, RULES, options, Map.of(), 1));
     }
@@ -67,7 +67,7 @@ class StandingsCalculatorBreakdownTest {
     @Test
     void anExcludedRaceIsLeftOut() {
         List<ResultEntry> results = List.of(race(1, 1, 1, 1), race(2, 2, 1, 1));
-        ScoringOptions options = new ScoringOptions(true, null, Set.of(), Set.of(2L));
+        ScoringOptions options = new ScoringOptions(true, CountingRule.ALL, Set.of(), Set.of(2L));
 
         DriverBreakdown breakdown = calculator.driverBreakdown(results, RULES, options, Map.of(), 1);
 
@@ -79,7 +79,7 @@ class StandingsCalculatorBreakdownTest {
     void marksTheRoundsThatDoNotCountWhenOnlyTheBestResultsCount() {
         List<ResultEntry> results = List.of(
                 race(1, 1, 1, 1), race(2, 2, 1, 3), race(3, 3, 1, 2), race(4, 4, 1, 3));
-        ScoringOptions options = new ScoringOptions(true, 2, Set.of(), Set.of());
+        ScoringOptions options = new ScoringOptions(true, CountingRule.best(2), Set.of(), Set.of());
 
         DriverBreakdown breakdown = calculator.driverBreakdown(results, RULES, options, Map.of(), 1);
 
@@ -140,7 +140,7 @@ class StandingsCalculatorBreakdownTest {
         List<ResultEntry> results = List.of(
                 race(1, 1, 1, 1), race(1, 1, 2, 2), race(1, 1, 3, 3),
                 race(2, 2, 3, 1), race(2, 2, 1, 2), race(2, 2, 2, 3));
-        ScoringOptions options = new ScoringOptions(true, null, Set.of(), Set.of());
+        ScoringOptions options = new ScoringOptions(true, CountingRule.ALL, Set.of(), Set.of());
 
         List<StandingRow> standings = calculator.driverStandings(results, RULES, options);
         for (StandingRow row : standings) {

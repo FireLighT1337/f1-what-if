@@ -1,7 +1,7 @@
 package com.f1whatif.web;
 
-import com.f1whatif.scoring.ScoringOptions;
 import com.f1whatif.service.RulesetSummary;
+import com.f1whatif.service.StandingsQuery;
 import com.f1whatif.service.StandingsResponse;
 import com.f1whatif.service.StandingsService;
 import java.util.List;
@@ -38,8 +38,8 @@ public class StandingsController {
             @RequestParam(required = false) Set<Long> excludeDrivers,
             @RequestParam(required = false) Set<Long> excludeRaces) {
         try {
-            ScoringOptions options = new ScoringOptions(includeSprints, countBest, excludeDrivers, excludeRaces);
-            return standingsService.standings(year, ruleset, options);
+            return standingsService.standings(year, ruleset,
+                    new StandingsQuery(countBest, includeSprints, excludeDrivers, excludeRaces));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }

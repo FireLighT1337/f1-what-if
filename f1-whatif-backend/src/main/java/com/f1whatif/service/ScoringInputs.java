@@ -1,9 +1,12 @@
 package com.f1whatif.service;
 
+import com.f1whatif.entity.RaceMultiplier;
 import com.f1whatif.entity.RaceResult;
 import com.f1whatif.entity.ScoringRuleset;
+import com.f1whatif.entity.SeasonRule;
 import com.f1whatif.entity.SessionType;
 import com.f1whatif.entity.ShortenedRace;
+import com.f1whatif.scoring.CountingRule;
 import com.f1whatif.scoring.RaceDistance;
 import com.f1whatif.scoring.ResultEntry;
 import com.f1whatif.scoring.ScoringRules;
@@ -37,6 +40,43 @@ final class ScoringInputs {
                 ruleset.getFastestLapPoint().doubleValue(),
                 ruleset.isFastestLapRequiresTopTen(),
                 ruleset.getShortenedPolicy());
+    }
+
+    /**
+     * The counting rule for a request: null = the season's real rule, 0 = all results, N = best N round totals.
+     *
+     * @param seasonRule the season's real rule, or null for seasons in which every result counted
+     */
+    static CountingRule counting(Integer countBest, SeasonRule seasonRule) {
+        if (countBest != null) {
+            return countBest == 0 ? CountingRule.ALL : CountingRule.best(countBest);
+        }
+        return seasonCounting(seasonRule);
+    }
+
+    /** The rule that counted in the real championship of the season. */
+    static CountingRule seasonCounting(SeasonRule seasonRule) {
+        if (seasonRule == null) {
+            return CountingRule.ALL;
+        }
+        if (seasonRule.getBestOverall() != null) {
+            return CountingRule.best(seasonRule.getBestOverall());
+        }
+        if (seasonRule.getSplitAfterRound() != null && seasonRule.getBestFirst() != null
+                && seasonRule.getBestSecond() != null) {
+            return CountingRule.split(seasonRule.getSplitAfterRound(), seasonRule.getBestFirst(),
+                    seasonRule.getBestSecond());
+        }
+        return CountingRule.ALL;
+    }
+
+    /** Round -> factor for the race points of that round. */
+    static Map<Integer, Double> multipliers(List<RaceMultiplier> multipliers) {
+        Map<Integer, Double> out = new HashMap<>();
+        for (RaceMultiplier multiplier : multipliers) {
+            out.put(multiplier.getRound(), multiplier.getMultiplier().doubleValue());
+        }
+        return out;
     }
 
     /** Race id -> distance, for the races of the season that ended early. */

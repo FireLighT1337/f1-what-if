@@ -12,6 +12,8 @@ import com.f1whatif.entity.RaceResult;
 import com.f1whatif.entity.ScoringRuleset;
 import com.f1whatif.repository.RaceResultRepository;
 import com.f1whatif.repository.ScoringRulesetRepository;
+import com.f1whatif.repository.RaceMultiplierRepository;
+import com.f1whatif.repository.SeasonRuleRepository;
 import com.f1whatif.repository.ShortenedRaceRepository;
 import com.f1whatif.scoring.DriverBreakdown;
 import com.f1whatif.scoring.RoundBreakdown;
@@ -38,10 +40,15 @@ public class DriverScenarioService {
     private final RaceResultRepository results;
     private final ScoringRulesetRepository rulesets;
     private final ShortenedRaceRepository shortenedRaces;
+    private final SeasonRuleRepository seasonRules;
+    private final RaceMultiplierRepository raceMultipliers;
     private final StandingsCalculator calculator = new StandingsCalculator();
 
     public DriverScenarioService(DriverSeasonService realResults, RaceResultRepository results,
-                                 ScoringRulesetRepository rulesets, ShortenedRaceRepository shortenedRaces) {
+                                 ScoringRulesetRepository rulesets, ShortenedRaceRepository shortenedRaces,
+                                 SeasonRuleRepository seasonRules, RaceMultiplierRepository raceMultipliers) {
+        this.seasonRules = seasonRules;
+        this.raceMultipliers = raceMultipliers;
         this.realResults = realResults;
         this.results = results;
         this.rulesets = rulesets;
@@ -59,13 +66,15 @@ public class DriverScenarioService {
         }
 
         List<RaceResult> rows = results.findByRace_Season_Year(year);
-        ScoringOptions options = new ScoringOptions(query.includeSprints(), query.countBest(),
+        ScoringOptions options = new ScoringOptions(query.includeSprints(),
+                ScoringInputs.counting(query.countBest(), seasonRules.findById(year).orElse(null)),
                 query.excludedDriverIds(), ScoringInputs.raceIdsOfRounds(rows, query.excludedRounds()));
         DriverBreakdown breakdown = calculator.driverBreakdown(
                 rows.stream().map(ScoringInputs::entry).toList(),
                 ScoringInputs.rules(ruleset),
                 options,
                 ScoringInputs.distances(rows, shortenedRaces.findBySeasonYear(year)),
+                ScoringInputs.multipliers(raceMultipliers.findBySeasonYear(year)),
                 driverId);
         if (breakdown == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The driver has no results left in this scenario");

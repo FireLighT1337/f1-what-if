@@ -3,7 +3,6 @@ package com.f1whatif.scoring;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,12 +24,24 @@ public final class StandingsCalculator {
     }
 
     /**
-     * @param distances race id -> distance, only for races that ended early; races that are
+     * @param distances race id -> distance, only for races that ended early; races
+     *                  that are
      *                  not in the map are treated as having run their full distance
      */
     public List<StandingRow> driverStandings(
             List<ResultEntry> results, ScoringRules rules, ScoringOptions options,
             Map<Long, RaceDistance> distances) {
+        return driverStandings(results, rules, options, distances, Map.of());
+    }
+
+    /**
+     * @param roundMultipliers round -> factor applied to the race points of that
+     *                         round (not to sprints),
+     *                         for example 2.0 for a double-points finale
+     */
+    public List<StandingRow> driverStandings(
+            List<ResultEntry> results, ScoringRules rules, ScoringOptions options,
+            Map<Long, RaceDistance> distances, Map<Integer, Double> roundMultipliers) {
 
         List<ResultEntry> prepared = prepare(results, options);
 
@@ -40,12 +51,12 @@ public final class StandingsCalculator {
                     ? RaceAdjustment.FULL
                     : rules.shortenedPolicy().adjustmentFor(distances.get(entry.raceId()));
             tallies.computeIfAbsent(entry.driverId(), DriverTally::new)
-                    .add(entry, pointsFor(entry, rules, adjustment));
+                    .add(entry, pointsFor(entry, rules, adjustment, roundMultipliers));
         }
 
         Map<Long, Double> totals = new HashMap<>();
         for (DriverTally tally : tallies.values()) {
-            totals.put(tally.driverId, tally.total(options.countBest()));
+            totals.put(tally.driverId, options.counting().total(tally.pointsByRound));
         }
 
         List<DriverTally> sorted = new ArrayList<>(tallies.values());
@@ -63,9 +74,12 @@ public final class StandingsCalculator {
     }
 
     /**
-     * Ranks drivers by points that are given rather than calculated, for example the points that were
-     * really awarded, and breaks ties exactly like {@link #driverStandings}. This keeps the real standings
-     * and a what-if calculation comparable: without it, drivers on equal points could appear to swap
+     * Ranks drivers by points that are given rather than calculated, for example
+     * the points that were
+     * really awarded, and breaks ties exactly like {@link #driverStandings}. This
+     * keeps the real standings
+     * and a what-if calculation comparable: without it, drivers on equal points
+     * could appear to swap
      * places only because the two rankings split the tie differently.
      */
     public List<StandingRow> rankByPoints(List<ResultEntry> results, Map<Long, Double> pointsByDriver) {
@@ -84,7 +98,8 @@ public final class StandingsCalculator {
             int byPoints = Double.compare(pointsByDriver.get(b), pointsByDriver.get(a));
             return byPoints != 0
                     ? byPoints
-                    : compareByCountback(finishesByDriver.getOrDefault(a, none), a, finishesByDriver.getOrDefault(b, none), b);
+                    : compareByCountback(finishesByDriver.getOrDefault(a, none), a,
+                            finishesByDriver.getOrDefault(b, none), b);
         });
 
         List<StandingRow> rows = new ArrayList<>();
@@ -96,15 +111,23 @@ public final class StandingsCalculator {
     }
 
     /**
-     * How one driver scored in every round under a scenario, and where that leaves them.
+     * How one driver scored in every round under a scenario, and where that leaves
+     * them.
      *
-     * @return null when the driver does not appear in the scenario (excluded, or no results left)
+     * @return null when the driver does not appear in the scenario (excluded, or no
+     *         results left)
      */
     public DriverBreakdown driverBreakdown(
             List<ResultEntry> results, ScoringRules rules, ScoringOptions options,
             Map<Long, RaceDistance> distances, long driverId) {
+        return driverBreakdown(results, rules, options, distances, Map.of(), driverId);
+    }
 
-        StandingRow standing = driverStandings(results, rules, options, distances).stream()
+    public DriverBreakdown driverBreakdown(
+            List<ResultEntry> results, ScoringRules rules, ScoringOptions options,
+            Map<Long, RaceDistance> distances, Map<Integer, Double> roundMultipliers, long driverId) {
+
+        StandingRow standing = driverStandings(results, rules, options, distances, roundMultipliers).stream()
                 .filter(row -> row.driverId() == driverId)
                 .findFirst()
                 .orElse(null);
@@ -113,7 +136,7 @@ public final class StandingsCalculator {
         }
 
         record Parts(Integer racePosition, double racePoints, boolean hasRace,
-                     Integer sprintPosition, double sprintPoints, boolean hasSprint) {
+                Integer sprintPosition, double sprintPoints, boolean hasSprint) {
         }
         Map<Integer, Parts> byRound = new TreeMap<>();
         for (ResultEntry entry : prepare(results, options)) {
@@ -123,26 +146,18 @@ public final class StandingsCalculator {
             RaceAdjustment adjustment = entry.sprint()
                     ? RaceAdjustment.FULL
                     : rules.shortenedPolicy().adjustmentFor(distances.get(entry.raceId()));
-            double points = pointsFor(entry, rules, adjustment);
+            double points = pointsFor(entry, rules, adjustment, roundMultipliers);
             Parts current = byRound.getOrDefault(entry.round(), new Parts(null, 0, false, null, 0, false));
             byRound.put(entry.round(), entry.sprint()
-                    ? new Parts(current.racePosition(), current.racePoints(), current.hasRace(), entry.position(), points, true)
-                    : new Parts(entry.position(), points, true, current.sprintPosition(), current.sprintPoints(), current.hasSprint()));
+                    ? new Parts(current.racePosition(), current.racePoints(), current.hasRace(), entry.position(),
+                            points, true)
+                    : new Parts(entry.position(), points, true, current.sprintPosition(), current.sprintPoints(),
+                            current.hasSprint()));
         }
 
-        // With "best N results count", the N rounds with the most points are the ones that count.
-        Set<Integer> counted = new HashSet<>();
-        List<Map.Entry<Integer, Parts>> byPoints = new ArrayList<>(byRound.entrySet());
-        byPoints.sort((a, b) -> {
-            int comparison = Double.compare(
-                    b.getValue().racePoints() + b.getValue().sprintPoints(),
-                    a.getValue().racePoints() + a.getValue().sprintPoints());
-            return comparison != 0 ? comparison : Integer.compare(a.getKey(), b.getKey());
-        });
-        int limit = options.countBest() == null ? byPoints.size() : Math.min(options.countBest(), byPoints.size());
-        for (int i = 0; i < limit; i++) {
-            counted.add(byPoints.get(i).getKey());
-        }
+        Map<Integer, Double> pointsByRound = new TreeMap<>();
+        byRound.forEach((round, parts) -> pointsByRound.put(round, parts.racePoints() + parts.sprintPoints()));
+        Set<Integer> counted = options.counting().countedRounds(pointsByRound);
 
         List<RoundBreakdown> rounds = new ArrayList<>();
         for (Map.Entry<Integer, Parts> entry : byRound.entrySet()) {
@@ -153,7 +168,10 @@ public final class StandingsCalculator {
         return new DriverBreakdown(standing.rank(), standing.points(), rounds);
     }
 
-    /** Countback: most wins, then most second places, and so on; the driver id only settles exact ties. */
+    /**
+     * Countback: most wins, then most second places, and so on; the driver id only
+     * settles exact ties.
+     */
     private static int compareByCountback(int[] finishesA, long idA, int[] finishesB, long idB) {
         for (int p = 1; p <= COUNTBACK_DEPTH; p++) {
             int byCount = Integer.compare(finishesB[p], finishesA[p]);
@@ -178,7 +196,8 @@ public final class StandingsCalculator {
     }
 
     /**
-     * Removes excluded drivers and moves everyone behind them up, so "what if driver X
+     * Removes excluded drivers and moves everyone behind them up, so "what if
+     * driver X
      * had never raced" gives the others the positions they would have taken.
      */
     private static List<ResultEntry> removeExcludedDrivers(List<ResultEntry> entries, Set<Long> excluded) {
@@ -209,7 +228,8 @@ public final class StandingsCalculator {
         return out;
     }
 
-    private static double pointsFor(ResultEntry entry, ScoringRules rules, RaceAdjustment adjustment) {
+    private static double pointsFor(ResultEntry entry, ScoringRules rules, RaceAdjustment adjustment,
+            Map<Integer, Double> roundMultipliers) {
         if (entry.position() == null) {
             return 0.0;
         }
@@ -222,6 +242,7 @@ public final class StandingsCalculator {
                     : rules.racePoints();
             points = table.getOrDefault(entry.position(), 0.0) * adjustment.factor();
         }
+        double multiplier = entry.sprint() ? 1.0 : roundMultipliers.getOrDefault(entry.round(), 1.0);
 
         boolean fastestLapBonus = !entry.sprint()
                 && entry.fastestLap()
@@ -231,7 +252,7 @@ public final class StandingsCalculator {
         if (fastestLapBonus) {
             points += rules.fastestLapPoint();
         }
-        return points;
+        return points * multiplier;
     }
 
     private record SessionKey(long raceId, boolean sprint) {
@@ -241,7 +262,9 @@ public final class StandingsCalculator {
         final long driverId;
         /** Points per round; a race and its sprint count together as one round. */
         final Map<Integer, Double> pointsByRound = new TreeMap<>();
-        /** finishes[p] = number of times the driver finished in position p in a race. */
+        /**
+         * finishes[p] = number of times the driver finished in position p in a race.
+         */
         final int[] finishes = new int[COUNTBACK_DEPTH + 1];
 
         DriverTally(long driverId) {
@@ -254,19 +277,6 @@ public final class StandingsCalculator {
             if (!entry.sprint() && position != null && position >= 1 && position <= COUNTBACK_DEPTH) {
                 finishes[position]++;
             }
-        }
-
-        double total(Integer countBest) {
-            List<Double> values = new ArrayList<>(pointsByRound.values());
-            if (countBest != null) {
-                values.sort(Comparator.reverseOrder());
-                values = values.subList(0, Math.min(countBest, values.size()));
-            }
-            double sum = 0;
-            for (double value : values) {
-                sum += value;
-            }
-            return sum;
         }
     }
 }

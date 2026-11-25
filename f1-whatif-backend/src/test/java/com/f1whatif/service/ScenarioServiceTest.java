@@ -20,7 +20,6 @@ import com.f1whatif.repository.RaceQueryRepository;
 import com.f1whatif.repository.ScenarioRepository;
 import com.f1whatif.repository.ScoringRulesetRepository;
 import com.f1whatif.repository.SeasonRepository;
-import com.f1whatif.scoring.ScoringOptions;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -105,7 +104,7 @@ class ScenarioServiceTest {
 
         service.standings(1L, 1L);
 
-        ArgumentCaptor<ScoringOptions> options = ArgumentCaptor.forClass(ScoringOptions.class);
+        ArgumentCaptor<StandingsQuery> options = ArgumentCaptor.forClass(StandingsQuery.class);
         verify(standingsService).standings(eq(1984), eq("classic-1961"), options.capture());
         assertEquals(Set.of(60L), options.getValue().excludedRaceIds());
         assertEquals(Set.of(5L), options.getValue().excludedDriverIds());

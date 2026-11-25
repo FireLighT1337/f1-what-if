@@ -11,8 +11,8 @@ public record ScenarioQuery(
         Set<Integer> excludedRounds) {
 
     public ScenarioQuery {
-        if (countBest != null && countBest < 1) {
-            throw new IllegalArgumentException("countBest must be at least 1");
+        if (countBest != null && countBest < 0) {
+            throw new IllegalArgumentException("countBest must be 0 or more");
         }
         excludedDriverIds = excludedDriverIds == null ? Set.of() : Set.copyOf(excludedDriverIds);
         excludedRounds = excludedRounds == null ? Set.of() : Set.copyOf(excludedRounds);

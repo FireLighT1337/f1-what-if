@@ -11,7 +11,7 @@ public record ScenarioRequest(
         @Min(1950) @Max(2100) int seasonYear,
         @NotBlank @Size(max = 64) String rulesetCode,
         boolean includeSprints,
-        @Min(1) Integer countBest,
+        @Min(0) Integer countBest,
         @Size(max = 100) Set<Long> excludedDriverIds,
         @Size(max = 50) Set<Integer> excludedRounds) {
 }

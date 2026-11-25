@@ -60,7 +60,7 @@ class StandingsCalculatorTest {
     void countBestKeepsOnlyTheBestRoundTotals() {
         List<ResultEntry> results = List.of(
                 race(1, 1, 1, 1), race(2, 2, 1, 3), race(3, 3, 1, 1));
-        ScoringOptions options = new ScoringOptions(true, 2, Set.of(), Set.of());
+        ScoringOptions options = new ScoringOptions(true, CountingRule.best(2), Set.of(), Set.of());
 
         List<StandingRow> standings = calculator.driverStandings(results, SIMPLE, options);
 
@@ -70,7 +70,7 @@ class StandingsCalculatorTest {
     @Test
     void excludingADriverMovesEveryoneBehindThemUp() {
         List<ResultEntry> results = List.of(race(1, 1, 1, 1), race(1, 1, 2, 2), race(1, 1, 3, 3));
-        ScoringOptions options = new ScoringOptions(true, null, Set.of(1L), Set.of());
+        ScoringOptions options = new ScoringOptions(true, CountingRule.ALL, Set.of(1L), Set.of());
 
         List<StandingRow> standings = calculator.driverStandings(results, SIMPLE, options);
 
@@ -87,7 +87,7 @@ class StandingsCalculatorTest {
         double withSprints = calculator.driverStandings(results, SIMPLE, ScoringOptions.defaults())
                 .get(0).points();
         double withoutSprints = calculator.driverStandings(
-                        results, SIMPLE, new ScoringOptions(false, null, Set.of(), Set.of()))
+                        results, SIMPLE, new ScoringOptions(false, CountingRule.ALL, Set.of(), Set.of()))
                 .get(0).points();
 
         assertEquals(33.0, withSprints, DELTA);
