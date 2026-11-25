@@ -51,6 +51,16 @@ Clicking a driver in the standings opens `/seasons/:year/drivers/:driverId`: sea
 how the driver finished every race. The photo is requested separately, so the results never wait
 for it; without one the page shows the driver's initials.
 
+Driver links from the explorer and from shared scenarios carry the current settings as query
+parameters (`ruleset`, `includeSprints`, `countBest`, `excludeDrivers`, `excludeRounds`; rounds,
+not race ids). With a `ruleset` in the address, the driver page loads
+`/api/seasons/{year}/drivers/{id}/scenario-results` and shows real and scenario finishes side by
+side, with excluded races muted and dropped rounds struck through. A toggle switches back to the
+real results. Without those parameters the page is unchanged.
+
+Clicking the logo or the Explorer link resets the explorer to the newest season and the default
+points system (`ExplorerActions.defaultsRestored`).
+
 ## Accounts and scenarios
 - **Login:** the backend returns a token that lives for an hour. It is kept in `localStorage`, so a
   reload does not log the user out, and it is sent as `Authorization: Bearer ...` only on calls that

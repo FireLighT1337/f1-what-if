@@ -66,7 +66,7 @@ export class ReferenceEffects {
         map(({ scenario }) => scenario.seasonYear),
       ),
       this.actions$.pipe(
-        ofType(ReferenceActions.initialLoadSucceeded),
+        ofType(ReferenceActions.initialLoadSucceeded, ExplorerActions.defaultsRestored),
         withLatestFrom(this.store.select(explorerFeature.selectSeason)),
         map(([, season]) => season),
       ),
@@ -98,7 +98,7 @@ export class ReferenceEffects {
         map(({ scenario }) => scenario.rulesetCode),
       ),
       this.actions$.pipe(
-        ofType(ReferenceActions.initialLoadSucceeded),
+        ofType(ReferenceActions.initialLoadSucceeded, ExplorerActions.defaultsRestored),
         withLatestFrom(this.store.select(explorerFeature.selectRulesetCode)),
         map(([, code]) => code),
       ),

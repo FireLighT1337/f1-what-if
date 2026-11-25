@@ -82,4 +82,29 @@ describe('F1Api', () => {
 
     http.expectOne('/api/drivers/2/photo').flush({});
   });
+
+  it('requests how a driver finished under a scenario, sending only the settings that are set', () => {
+    api
+      .driverScenario(1984, 2, { ruleset: 'classic-1961', includeSprints: true, countBest: null, excludeDrivers: [], excludeRounds: [] })
+      .subscribe();
+
+    const plain = http.expectOne((r) => r.url === '/api/seasons/1984/drivers/2/scenario-results');
+    expect(plain.request.params.get('ruleset')).toBe('classic-1961');
+    expect(plain.request.params.get('includeSprints')).toBe('true');
+    expect(plain.request.params.has('countBest')).toBe(false);
+    expect(plain.request.params.has('excludeDrivers')).toBe(false);
+    expect(plain.request.params.has('excludeRounds')).toBe(false);
+    plain.flush({});
+
+    api
+      .driverScenario(1984, 2, { ruleset: 'x', includeSprints: false, countBest: 8, excludeDrivers: [1, 3], excludeRounds: [4, 6] })
+      .subscribe();
+
+    const full = http.expectOne((r) => r.url === '/api/seasons/1984/drivers/2/scenario-results');
+    expect(full.request.params.get('includeSprints')).toBe('false');
+    expect(full.request.params.get('countBest')).toBe('8');
+    expect(full.request.params.get('excludeDrivers')).toBe('1,3');
+    expect(full.request.params.get('excludeRounds')).toBe('4,6');
+    full.flush({});
+  });
 });

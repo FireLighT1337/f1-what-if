@@ -11,6 +11,7 @@ import { referenceFeature } from '../../state/reference/reference.reducer';
 import { selectIsLoggedIn } from '../../state/auth/auth.selectors';
 import { ScenariosActions } from '../../state/scenarios/scenarios.actions';
 import { scenariosFeature } from '../../state/scenarios/scenarios.reducer';
+import { toQueryParams } from '../../core/scenario-query';
 import { ScenarioSave, SaveRequest } from './scenario-save';
 import { SettingsPanel } from './settings-panel';
 import { StandingsTable } from './standings-table';
@@ -50,6 +51,19 @@ export class ExplorerPage implements OnInit {
   protected readonly rulesetDetail = this.store.selectSignal(selectSelectedRulesetDetail);
 
   protected readonly rows = computed(() => this.standings()?.standings ?? []);
+  /** The current settings as query parameters, so a driver page can show the same scenario. */
+  protected readonly driverQuery = computed(() => {
+    const ruleset = this.rulesetCode();
+    return ruleset === null
+      ? null
+      : toQueryParams({
+          ruleset,
+          includeSprints: this.includeSprints(),
+          countBest: this.countBest(),
+          excludeDrivers: this.excludedDriverIds(),
+          excludeRounds: this.excludedRounds(),
+        });
+  });
   protected readonly canSave = computed(() => this.standings() !== null && this.status() !== 'error');
   protected readonly heading = computed(() => (this.season() === null ? 'Standings' : `${this.season()} standings`));
   protected readonly subtitle = computed(() => {

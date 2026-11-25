@@ -35,6 +35,7 @@ export class ExplorerEffects {
           ExplorerActions.driverExclusionToggled,
           ExplorerActions.roundExclusionToggled,
           ExplorerActions.exclusionsCleared,
+          ExplorerActions.defaultsRestored,
         ),
       ),
       // A scenario can exclude rounds, which need the races of its season, so wait until they are loaded.

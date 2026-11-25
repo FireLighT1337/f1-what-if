@@ -1,6 +1,6 @@
-import { DriverPhoto, DriverSeasonResponse } from '../../core/models';
+import { DriverPhoto, DriverScenarioResponse, DriverSeasonResponse, ScenarioParams } from '../../core/models';
 import { DriverActions } from './driver.actions';
-import { driverFeature, driverKey, initialDriverState } from './driver.reducer';
+import { driverFeature, driverKey, driverScenarioKey, initialDriverState } from './driver.reducer';
 
 const reduce = driverFeature.reducer;
 
@@ -48,5 +48,59 @@ describe('driver reducer', () => {
 
     expect(requested.photosRequested).toEqual([2]);
     expect(loaded.photos[2]).toBe(photo);
+  });
+
+  describe('scenario results', () => {
+    const params: ScenarioParams = { ruleset: 'x', includeSprints: true, countBest: null, excludeDrivers: [], excludeRounds: [3] };
+    const other: ScenarioParams = { ...params, countBest: 5 };
+    const scenarioResponse = {
+      driver: response.driver,
+      season: 1984,
+      rulesetCode: 'x',
+      rulesetName: 'X',
+      includeSprints: true,
+      countBest: null,
+      summary: { rank: 2, points: 40, racesCounted: 10, wins: 1, podiums: 3 },
+      races: [],
+    } as DriverScenarioResponse;
+
+    it('remembers the scenario of the open page, and forgets it when a page without one opens', () => {
+      const withScenario = reduce(initialDriverState, DriverActions.scenarioPageOpened({ year: 1984, driverId: 2, params }));
+      const without = reduce(withScenario, DriverActions.pageOpened({ year: 1984, driverId: 2 }));
+
+      expect(withScenario.currentScenario).toEqual({ year: 1984, driverId: 2, params });
+      expect(without.currentScenario).toBeNull();
+    });
+
+    it('marks a request as loading, then stores the result', () => {
+      const key = driverScenarioKey(1984, 2, params);
+      const loading = reduce(initialDriverState, DriverActions.scenarioResultsRequested({ year: 1984, driverId: 2, params }));
+      const loaded = reduce(
+        loading,
+        DriverActions.scenarioResultsSucceeded({ year: 1984, driverId: 2, params, response: scenarioResponse }),
+      );
+
+      expect(loading.scenarioEntries[key].status).toBe('loading');
+      expect(loaded.scenarioEntries[key]).toEqual({ status: 'loaded', data: scenarioResponse, error: null });
+    });
+
+    it('stores a failure without touching other scenarios or the real results', () => {
+      const loaded = reduce(
+        initialDriverState,
+        DriverActions.scenarioResultsSucceeded({ year: 1984, driverId: 2, params: other, response: scenarioResponse }),
+      );
+      const failed = reduce(
+        loaded,
+        DriverActions.scenarioResultsFailed({ year: 1984, driverId: 2, params, error: 'This driver is excluded in the scenario.' }),
+      );
+
+      expect(failed.scenarioEntries[driverScenarioKey(1984, 2, params)]).toEqual({
+        status: 'error',
+        data: null,
+        error: 'This driver is excluded in the scenario.',
+      });
+      expect(failed.scenarioEntries[driverScenarioKey(1984, 2, other)].status).toBe('loaded');
+      expect(failed.entries).toEqual({});
+    });
   });
 });

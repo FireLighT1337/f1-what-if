@@ -11,7 +11,7 @@ import { AuthEffects, safeReturnUrl } from './auth.effects';
 
 const NOW = new Date('2026-11-18T10:00:00Z');
 const tokenResponse = { accessToken: 'abc', tokenType: 'Bearer', expiresInSeconds: 3600 };
-const user = { id: 1, email: 'asad@example.com', role: 'USER' };
+const user = { id: 1, username: 'asad', role: 'USER' };
 
 describe('AuthEffects', () => {
   let actions$: Subject<Action>;
@@ -59,9 +59,9 @@ describe('AuthEffects', () => {
     api.login.mockReturnValue(of(tokenResponse));
     const emitted = collect(effects.login$);
 
-    actions$.next(AuthActions.loginSubmitted({ email: 'asad@example.com', password: 'secret-password' }));
+    actions$.next(AuthActions.loginSubmitted({ username: 'asad', password: 'secret-password' }));
 
-    expect(api.login).toHaveBeenCalledWith('asad@example.com', 'secret-password');
+    expect(api.login).toHaveBeenCalledWith('asad', 'secret-password');
     expect(emitted).toEqual([AuthActions.loginSucceeded({ token: 'abc', expiresAt: NOW.getTime() + 3_600_000 })]);
   });
 
@@ -70,9 +70,9 @@ describe('AuthEffects', () => {
     api.login.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 401 })));
     const emitted = collect(effects.login$);
 
-    actions$.next(AuthActions.loginSubmitted({ email: 'a@b.c', password: 'wrong-password' }));
+    actions$.next(AuthActions.loginSubmitted({ username: 'someone', password: 'wrong-password' }));
 
-    expect(emitted).toEqual([AuthActions.authFailed({ error: 'Invalid email or password.' })]);
+    expect(emitted).toEqual([AuthActions.authFailed({ error: 'Invalid username or password.' })]);
   });
 
   it('creates the account and then logs in', () => {
@@ -81,22 +81,22 @@ describe('AuthEffects', () => {
     api.login.mockReturnValue(of(tokenResponse));
     const emitted = collect(effects.register$);
 
-    actions$.next(AuthActions.registerSubmitted({ email: 'asad@example.com', password: 'secret-password' }));
+    actions$.next(AuthActions.registerSubmitted({ username: 'asad', password: 'secret-password' }));
 
-    expect(api.register).toHaveBeenCalledWith('asad@example.com', 'secret-password');
-    expect(api.login).toHaveBeenCalledWith('asad@example.com', 'secret-password');
+    expect(api.register).toHaveBeenCalledWith('asad', 'secret-password');
+    expect(api.login).toHaveBeenCalledWith('asad', 'secret-password');
     expect(emitted).toEqual([AuthActions.loginSucceeded({ token: 'abc', expiresAt: NOW.getTime() + 3_600_000 })]);
   });
 
-  it('does not try to log in when the email is already registered', () => {
+  it('does not try to log in when the username is already taken', () => {
     const effects = setup();
     api.register.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
     const emitted = collect(effects.register$);
 
-    actions$.next(AuthActions.registerSubmitted({ email: 'asad@example.com', password: 'secret-password' }));
+    actions$.next(AuthActions.registerSubmitted({ username: 'asad', password: 'secret-password' }));
 
     expect(api.login).not.toHaveBeenCalled();
-    expect(emitted).toEqual([AuthActions.authFailed({ error: 'That email address is already registered.' })]);
+    expect(emitted).toEqual([AuthActions.authFailed({ error: 'That username is already taken.' })]);
   });
 
   it('loads the user after logging in or restoring a session', () => {

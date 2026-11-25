@@ -8,8 +8,10 @@ test.describe('driver page', () => {
 
     await page.getByRole('link', { name: 'Niki Lauda' }).click();
 
-    await expect(page).toHaveURL(/\/seasons\/1984\/drivers\/1$/);
+    // The link carries the explorer's settings, so the page opens under that scenario; this test is about the real results.
+    await expect(page).toHaveURL(/\/seasons\/1984\/drivers\/1(\?|$)/);
     await expect(page.getByRole('heading', { level: 1, name: 'Niki Lauda' })).toBeVisible();
+    await page.getByRole('button', { name: 'Real results' }).click();
     const rows = page.getByRole('table').getByRole('row');
     await expect(rows).toHaveCount(4); // header + three races
     await expect(rows.nth(1)).toContainText('Brazilian Grand Prix');
@@ -63,5 +65,31 @@ test.describe('driver page', () => {
     await page.goto('/seasons/1984/drivers/99');
 
     await expect(page.getByRole('alert')).toContainText('did not take part in that season');
+  });
+
+  test('shows the driver under the scenario that was selected in the explorer', async ({ page }) => {
+    await mockBackend(page);
+    const scenarioRequests: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/scenario-results')) {
+        scenarioRequests.push(request.url());
+      }
+    });
+    await page.goto('/');
+    await page.getByRole('checkbox', { name: /Round 6/ }).check();
+
+    await page.getByRole('link', { name: 'Niki Lauda' }).click();
+
+    await expect(page).toHaveURL(/\/seasons\/1984\/drivers\/1\?.*excludeRounds=6/);
+    await expect(page.getByTestId('scenario-banner')).toContainText('1 exclusion');
+    const rows = page.getByTestId('scenario-table').getByRole('row');
+    await expect(rows).toHaveCount(4); // header + three races
+    await expect(rows.nth(3)).toContainText('Excluded');
+    expect(scenarioRequests.some((url) => url.includes('excludeRounds=6'))).toBe(true);
+
+    await page.getByRole('button', { name: 'Real results' }).click();
+
+    await expect(page.getByTestId('scenario-table')).toHaveCount(0);
+    await expect(page.getByRole('table').getByRole('row').nth(3)).toContainText('Ret');
   });
 });

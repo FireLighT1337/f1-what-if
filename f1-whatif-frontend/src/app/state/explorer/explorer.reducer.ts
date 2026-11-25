@@ -1,5 +1,5 @@
 import { createFeature, createReducer, on } from '@ngrx/store';
-import { StandingsResponse } from '../../core/models';
+import { RulesetSummary, SeasonSummary, StandingsResponse } from '../../core/models';
 import { ReferenceActions } from '../reference/reference.actions';
 import { ScenariosActions } from '../scenarios/scenarios.actions';
 import { LoadStatus } from '../reference/reference.reducer';
@@ -43,6 +43,17 @@ export const initialExplorerState: ExplorerState = {
   error: null,
 };
 
+/** The newest season and the default points system (or the first one offered); null where there is none. */
+function pickDefaults(
+  seasons: SeasonSummary[],
+  rulesets: RulesetSummary[],
+): { season: number | null; rulesetCode: string | null } {
+  return {
+    season: seasons[0]?.year ?? null,
+    rulesetCode: (rulesets.find((r) => r.code === DEFAULT_RULESET) ?? rulesets[0])?.code ?? null,
+  };
+}
+
 const recalculating = { status: 'loading' as const, error: null };
 
 function toggle<T>(items: T[], item: T): T[] {
@@ -53,13 +64,22 @@ export const explorerFeature = createFeature({
   name: 'explorer',
   reducer: createReducer(
     initialExplorerState,
-    on(ReferenceActions.initialLoadSucceeded, (state, { seasons, rulesets }) => ({
-      ...state,
-      season: state.season ?? seasons[0]?.year ?? null,
-      rulesetCode:
-        state.rulesetCode ?? (rulesets.find((r) => r.code === DEFAULT_RULESET) ?? rulesets[0])?.code ?? null,
-      ...recalculating,
-    })),
+    on(ReferenceActions.initialLoadSucceeded, (state, { seasons, rulesets }) => {
+      const defaults = pickDefaults(seasons, rulesets);
+      return {
+        ...state,
+        season: state.season ?? defaults.season,
+        rulesetCode: state.rulesetCode ?? defaults.rulesetCode,
+        ...recalculating,
+      };
+    }),
+    // Back to a fresh explorer. Without any season there is nothing to calculate, so it stays idle.
+    on(ExplorerActions.defaultsRestored, (_state, { seasons, rulesets }) => {
+      const defaults = pickDefaults(seasons, rulesets);
+      return defaults.season === null || defaults.rulesetCode === null
+        ? { ...initialExplorerState }
+        : { ...initialExplorerState, ...defaults, ...recalculating };
+    }),
     // Drivers and rounds belong to one season, so changing the season clears them.
     on(ExplorerActions.seasonChanged, (state, { year }) => ({
       ...state,

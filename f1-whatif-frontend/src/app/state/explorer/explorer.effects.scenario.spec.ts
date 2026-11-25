@@ -37,6 +37,8 @@ const monaco: RaceInfo = {
 };
 
 describe('ExplorerEffects with saved scenarios', () => {
+  // Selector overrides live on module-level selectors; without a reset they leak into other spec files.
+  afterEach(() => TestBed.inject(MockStore).resetSelectors());
   let actions$: Subject<Action>;
   let api: { standings: ReturnType<typeof vi.fn> };
   let store: MockStore;

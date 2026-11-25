@@ -2,12 +2,16 @@
   <header class="border-b border-zinc-800 bg-zinc-900">
     <header class="border-b border-zinc-800 bg-zinc-900">
       <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <a routerLink="/" class="flex items-center gap-3">
+        <a routerLink="/" class="flex items-center gap-3" (click)="resetExplorer()">
           <span class="h-6 w-1.5 rounded-sm bg-f1-red" aria-hidden="true"></span>
           <span class="text-lg font-semibold tracking-tight">F1 What-If</span>
         </a>
         <nav aria-label="Main" class="flex flex-wrap items-center gap-4 text-sm text-zinc-400">
-          <a routerLink="/explorer" routerLinkActive="text-white" class="hover:text-white"
+          <a
+            routerLink="/explorer"
+            routerLinkActive="text-white"
+            class="hover:text-white"
+            (click)="resetExplorer()"
             >Explorer</a
           >
           @if (loggedIn()) {
@@ -15,8 +19,8 @@
               >My scenarios</a
             >
             @if (user(); as current) {
-              <span class="hidden text-zinc-500 sm:inline" data-testid="user-email">{{
-                current.email
+              <span class="hidden text-zinc-500 sm:inline" data-testid="user-name">{{
+                current.username
               }}</span>
             }
             <button type="button" class="hover:text-white" (click)="logout()">Log out</button>

@@ -9,12 +9,12 @@ export class AuthApi {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  register(email: string, password: string): Observable<UserInfo> {
-    return this.http.post<UserInfo>(`${this.baseUrl}/auth/register`, { email, password });
+  register(username: string, password: string): Observable<UserInfo> {
+    return this.http.post<UserInfo>(`${this.baseUrl}/auth/register`, { username, password });
   }
 
-  login(email: string, password: string): Observable<TokenResponse> {
-    return this.http.post<TokenResponse>(`${this.baseUrl}/auth/login`, { email, password });
+  login(username: string, password: string): Observable<TokenResponse> {
+    return this.http.post<TokenResponse>(`${this.baseUrl}/auth/login`, { username, password });
   }
 
   /** Who the stored token belongs to; also shows whether the token is still valid. */

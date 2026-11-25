@@ -7,11 +7,11 @@ export function describeAuthError(error: unknown, mode: 'login' | 'register'): s
       case 0:
         return 'Cannot reach the server. Check your connection and try again.';
       case 400:
-        return 'Please check your input: use a valid email address and a password of 8 to 72 characters.';
+        return 'Please check your input: the username needs 3 to 30 letters, digits, dots, underscores or hyphens, and the password 8 to 72 characters.';
       case 401:
-        return 'Invalid email or password.';
+        return 'Invalid username or password.';
       case 409:
-        return 'That email address is already registered.';
+        return 'That username is already taken.';
       case 429:
         return 'Too many attempts. Please wait a moment and try again.';
     }

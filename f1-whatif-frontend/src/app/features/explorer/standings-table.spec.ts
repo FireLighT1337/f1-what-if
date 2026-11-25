@@ -81,4 +81,23 @@ describe('StandingsTable', () => {
     expect(element.querySelector('tbody a')).toBeNull();
     expect(element.querySelector('tbody')?.textContent).toContain('Niki Lauda');
   });
+
+  it('hands the scenario settings on to the driver links', () => {
+    const element = render({
+      rows: [row(1, 'Niki Lauda', 72, 0)],
+      season: 1984,
+      queryParams: { ruleset: 'classic-1961', includeSprints: 'true', excludeRounds: '3' },
+      status: 'loaded',
+    });
+
+    expect(element.querySelector('tbody a')?.getAttribute('href')).toBe(
+      '/seasons/1984/drivers/1?ruleset=classic-1961&includeSprints=true&excludeRounds=3',
+    );
+  });
+
+  it('links to the plain driver page when there are no settings', () => {
+    const element = render({ rows: [row(1, 'Niki Lauda', 72, 0)], season: 1984, status: 'loaded' });
+
+    expect(element.querySelector('tbody a')?.getAttribute('href')).toBe('/seasons/1984/drivers/1');
+  });
 });

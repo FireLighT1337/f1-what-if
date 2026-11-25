@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
 import { Action } from '@ngrx/store';
-import { provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { ScenarioRequest, ScenarioResponse, StandingsResponse } from '../../core/models';
 import { ScenarioApi } from '../../core/scenario-api';
@@ -30,6 +30,8 @@ const saved: ScenarioResponse = {
 const standings: StandingsResponse = { season: 1984, ruleset: 'classic-1961', standings: [] };
 
 describe('ScenariosEffects', () => {
+  // Selector overrides live on module-level selectors; without a reset they leak into other spec files.
+  afterEach(() => TestBed.inject(MockStore).resetSelectors());
   let actions$: Subject<Action>;
   let api: Record<'list' | 'create' | 'update' | 'delete' | 'share' | 'unshare' | 'shared' | 'sharedStandings', ReturnType<typeof vi.fn>>;
 

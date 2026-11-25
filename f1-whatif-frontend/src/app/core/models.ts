@@ -136,7 +136,7 @@ export interface DriverPhoto {
 
 export interface UserInfo {
   id: number;
-  email: string;
+  username: string;
   role: string;
 }
 
@@ -163,4 +163,61 @@ export interface ScenarioResponse extends ScenarioRequest {
   publicId: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** The scenario settings that the driver page needs; races are excluded by round, as in saved scenarios. */
+export interface ScenarioParams {
+  ruleset: string;
+  includeSprints: boolean;
+  countBest: number | null;
+  excludeDrivers: number[];
+  excludeRounds: number[];
+}
+
+/** A sprint under a scenario: what really happened, and the position and points the scenario gives. */
+export interface DriverScenarioSprint {
+  realFinishPosition: number | null;
+  realPositionText: string | null;
+  finishPosition: number | null;
+  points: number;
+}
+
+export interface DriverScenarioRace {
+  round: number;
+  raceName: string;
+  date: string | null;
+  shortened: boolean;
+  entered: boolean;
+  /** The scenario leaves this race out. */
+  excluded: boolean;
+  team: string | null;
+  grid: number | null;
+  status: string | null;
+  realFinishPosition: number | null;
+  realPositionText: string | null;
+  /** The position the scenario gives; null when the race is excluded or not entered. */
+  finishPosition: number | null;
+  points: number;
+  /** False for excluded races and for rounds dropped because only the best results count. */
+  counted: boolean;
+  sprint: DriverScenarioSprint | null;
+}
+
+export interface DriverScenarioSummary {
+  rank: number;
+  points: number;
+  racesCounted: number;
+  wins: number;
+  podiums: number;
+}
+
+export interface DriverScenarioResponse {
+  driver: DriverProfile;
+  season: number;
+  rulesetCode: string;
+  rulesetName: string;
+  includeSprints: boolean;
+  countBest: number | null;
+  summary: DriverScenarioSummary;
+  races: DriverScenarioRace[];
 }

@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { ScenarioResponse, StandingsResponse } from '../../core/models';
+import { RulesetSummary, ScenarioResponse, SeasonSummary, StandingsResponse } from '../../core/models';
 
 export const ExplorerActions = createActionGroup({
   source: 'Explorer',
@@ -14,6 +14,8 @@ export const ExplorerActions = createActionGroup({
     'Exclusions Cleared': emptyProps(),
     /** Loads a saved or shared scenario into the explorer; owned scenarios can then be updated. */
     'Scenario Opened': props<{ scenario: ScenarioResponse; owned: boolean }>(),
+    /** Logo or Explorer link: back to the newest season and the default points system, nothing excluded. */
+    'Defaults Restored': props<{ seasons: SeasonSummary[]; rulesets: RulesetSummary[] }>(),
     'Standings Succeeded': props<{ response: StandingsResponse }>(),
     'Standings Failed': props<{ error: string }>(),
   },

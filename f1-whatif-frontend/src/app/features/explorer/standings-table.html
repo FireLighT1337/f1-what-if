@@ -36,6 +36,7 @@
               @if (season(); as year) {
                 <a
                   [routerLink]="['/seasons', year, 'drivers', row.driverId]"
+                  [queryParams]="queryParams()"
                   class="underline-offset-2 hover:text-f1-red hover:underline"
                   >{{ row.driver }}</a
                 >

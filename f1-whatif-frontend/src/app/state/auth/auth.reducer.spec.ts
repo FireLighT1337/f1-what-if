@@ -2,17 +2,17 @@ import { AuthActions } from './auth.actions';
 import { AuthState, authFeature, initialAuthState } from './auth.reducer';
 
 const reduce = authFeature.reducer;
-const user = { id: 1, email: 'asad@example.com', role: 'USER' };
+const user = { id: 1, username: 'asad', role: 'USER' };
 
 describe('auth reducer', () => {
   it('shows that a login or sign up is running and clears an old error', () => {
     const failed: AuthState = { ...initialAuthState, error: 'Nope' };
 
-    const state = reduce(failed, AuthActions.loginSubmitted({ email: 'a@b.c', password: 'x' }));
+    const state = reduce(failed, AuthActions.loginSubmitted({ username: 'someone', password: 'x' }));
 
     expect(state.working).toBe(true);
     expect(state.error).toBeNull();
-    expect(reduce(failed, AuthActions.registerSubmitted({ email: 'a@b.c', password: 'x' })).working).toBe(true);
+    expect(reduce(failed, AuthActions.registerSubmitted({ username: 'someone', password: 'x' })).working).toBe(true);
   });
 
   it('stores the token after logging in', () => {
@@ -32,9 +32,9 @@ describe('auth reducer', () => {
   it('stores the user and the error', () => {
     expect(reduce(initialAuthState, AuthActions.userLoaded({ user })).user).toEqual(user);
 
-    const failed = reduce({ ...initialAuthState, working: true }, AuthActions.authFailed({ error: 'Invalid email or password.' }));
+    const failed = reduce({ ...initialAuthState, working: true }, AuthActions.authFailed({ error: 'Invalid username or password.' }));
     expect(failed.working).toBe(false);
-    expect(failed.error).toBe('Invalid email or password.');
+    expect(failed.error).toBe('Invalid username or password.');
   });
 
   it('forgets everything when logging out or when the session expires', () => {

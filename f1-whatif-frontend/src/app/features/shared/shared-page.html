@@ -14,7 +14,12 @@
       Open in the explorer
     </button>
   </header>
-  <app-standings-table [rows]="rows()" [season]="shown.seasonYear" status="loaded" />
+  <app-standings-table
+    [rows]="rows()"
+    [season]="shown.seasonYear"
+    [queryParams]="driverQuery()"
+    status="loaded"
+  />
 } @else {
   <div class="space-y-2" aria-busy="true" aria-label="Loading shared scenario">
     @for (placeholder of [1, 2, 3, 4, 5, 6]; track placeholder) {

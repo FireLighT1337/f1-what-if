@@ -4,10 +4,12 @@ import { Observable } from 'rxjs';
 import { API_BASE_URL } from './api-config';
 import {
   DriverPhoto,
+  DriverScenarioResponse,
   DriverSeasonResponse,
   RaceInfo,
   RulesetDetail,
   RulesetSummary,
+  ScenarioParams,
   SeasonDriver,
   SeasonSummary,
   StandingsQuery,
@@ -60,6 +62,23 @@ export class F1Api {
 
   driverSeason(year: number, driverId: number): Observable<DriverSeasonResponse> {
     return this.http.get<DriverSeasonResponse>(`${this.baseUrl}/seasons/${year}/drivers/${driverId}/results`);
+  }
+
+  /** How the driver finished every race of the season under the scenario's settings. */
+  driverScenario(year: number, driverId: number, params: ScenarioParams): Observable<DriverScenarioResponse> {
+    let query = new HttpParams().set('ruleset', params.ruleset).set('includeSprints', String(params.includeSprints));
+    if (params.countBest !== null) {
+      query = query.set('countBest', String(params.countBest));
+    }
+    if (params.excludeDrivers.length > 0) {
+      query = query.set('excludeDrivers', params.excludeDrivers.join(','));
+    }
+    if (params.excludeRounds.length > 0) {
+      query = query.set('excludeRounds', params.excludeRounds.join(','));
+    }
+    return this.http.get<DriverScenarioResponse>(`${this.baseUrl}/seasons/${year}/drivers/${driverId}/scenario-results`, {
+      params: query,
+    });
   }
 
   driverPhoto(driverId: number): Observable<DriverPhoto> {

@@ -6,6 +6,7 @@ import { ReferenceActions } from '../../state/reference/reference.actions';
 import { referenceFeature } from '../../state/reference/reference.reducer';
 import { ScenariosActions } from '../../state/scenarios/scenarios.actions';
 import { scenariosFeature } from '../../state/scenarios/scenarios.reducer';
+import { toQueryParams } from '../../core/scenario-query';
 import { StandingsTable } from '../explorer/standings-table';
 import { describeScenario } from '../scenarios/describe-scenario';
 
@@ -32,6 +33,19 @@ export class SharedPage {
   protected readonly summary = computed(() => {
     const scenario = this.scenario();
     return scenario === null ? '' : describeScenario(scenario, this.rulesets());
+  });
+
+  protected readonly driverQuery = computed(() => {
+    const scenario = this.scenario();
+    return scenario === null
+      ? null
+      : toQueryParams({
+          ruleset: scenario.rulesetCode,
+          includeSprints: scenario.includeSprints,
+          countBest: scenario.countBest,
+          excludeDrivers: scenario.excludedDriverIds,
+          excludeRounds: scenario.excludedRounds,
+        });
   });
 
   constructor() {

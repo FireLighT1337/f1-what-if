@@ -71,10 +71,12 @@ describe('SharedPage', () => {
     expect(element.querySelector('tbody')?.textContent).toContain('Alain Prost');
   });
 
-  it('links the drivers to their pages', () => {
+  it('links the drivers to their pages, carrying the scenario along', () => {
     const { element } = create({ status: 'loaded', scenario, standings, error: null });
 
-    expect(element.querySelector('tbody a')?.getAttribute('href')).toBe('/seasons/1984/drivers/1');
+    expect(element.querySelector('tbody a')?.getAttribute('href')).toBe(
+      '/seasons/1984/drivers/1?ruleset=classic-1961&includeSprints=true&excludeRounds=6',
+    );
   });
 
   it('shows a placeholder while loading', () => {

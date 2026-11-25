@@ -5,10 +5,10 @@ import { Action } from '@ngrx/store';
 import { provideMockStore } from '@ngrx/store/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { F1Api } from '../../core/f1-api';
-import { DriverPhoto, DriverSeasonResponse } from '../../core/models';
+import { DriverPhoto, DriverScenarioResponse, DriverSeasonResponse, ScenarioParams } from '../../core/models';
 import { DriverActions } from './driver.actions';
 import { DriverEffects } from './driver.effects';
-import { DriverState, driverKey, initialDriverState } from './driver.reducer';
+import { DriverState, driverKey, driverScenarioKey, initialDriverState } from './driver.reducer';
 
 const response: DriverSeasonResponse = {
   driver: { id: 2, name: 'Alain Prost', code: 'PRO', nationality: 'French', dateOfBirth: null, wikipediaUrl: null },
@@ -20,11 +20,15 @@ const photo: DriverPhoto = { photoUrl: 'https://x/y.jpg', sourceUrl: 'https://x'
 
 describe('DriverEffects', () => {
   let actions$: Subject<Action>;
-  let api: { driverSeason: ReturnType<typeof vi.fn>; driverPhoto: ReturnType<typeof vi.fn> };
+  let api: {
+    driverSeason: ReturnType<typeof vi.fn>;
+    driverPhoto: ReturnType<typeof vi.fn>;
+    driverScenario: ReturnType<typeof vi.fn>;
+  };
 
   function setup(state: Partial<DriverState> = {}): DriverEffects {
     actions$ = new Subject<Action>();
-    api = { driverSeason: vi.fn(), driverPhoto: vi.fn() };
+    api = { driverSeason: vi.fn(), driverPhoto: vi.fn(), driverScenario: vi.fn() };
     TestBed.configureTestingModule({
       providers: [
         DriverEffects,
@@ -126,5 +130,69 @@ describe('DriverEffects', () => {
     expect(emitted).toHaveLength(1);
     const action = emitted[0] as ReturnType<typeof DriverActions.photoLoaded>;
     expect(action.photo.photoUrl).toBeNull();
+  });
+
+  describe('scenario results', () => {
+    const params: ScenarioParams = { ruleset: 'x', includeSprints: true, countBest: null, excludeDrivers: [], excludeRounds: [] };
+    const scenarioResponse = { season: 1984 } as DriverScenarioResponse;
+
+    it('asks for the results the first time a scenario page opens', () => {
+      const emitted = collect(setup().requestScenarioResults$);
+
+      actions$.next(DriverActions.scenarioPageOpened({ year: 1984, driverId: 2, params }));
+
+      expect(emitted).toEqual([DriverActions.scenarioResultsRequested({ year: 1984, driverId: 2, params })]);
+    });
+
+    it('does not ask again for a scenario that is loaded or loading, but retries after an error', () => {
+      const key = driverScenarioKey(1984, 2, params);
+      const loaded = collect(
+        setup({ scenarioEntries: { [key]: { status: 'loaded', data: scenarioResponse, error: null } } }).requestScenarioResults$,
+      );
+      actions$.next(DriverActions.scenarioPageOpened({ year: 1984, driverId: 2, params }));
+      expect(loaded).toEqual([]);
+      TestBed.resetTestingModule();
+
+      const loading = collect(
+        setup({ scenarioEntries: { [key]: { status: 'loading', data: null, error: null } } }).requestScenarioResults$,
+      );
+      actions$.next(DriverActions.scenarioPageOpened({ year: 1984, driverId: 2, params }));
+      expect(loading).toEqual([]);
+      TestBed.resetTestingModule();
+
+      const failed = collect(
+        setup({ scenarioEntries: { [key]: { status: 'error', data: null, error: 'x' } } }).requestScenarioResults$,
+      );
+      actions$.next(DriverActions.scenarioPageOpened({ year: 1984, driverId: 2, params }));
+      expect(failed).toEqual([DriverActions.scenarioResultsRequested({ year: 1984, driverId: 2, params })]);
+    });
+
+    it('loads the results from the API', () => {
+      const effects = setup();
+      api.driverScenario.mockReturnValue(of(scenarioResponse));
+      const emitted = collect(effects.loadScenarioResults$);
+
+      actions$.next(DriverActions.scenarioResultsRequested({ year: 1984, driverId: 2, params }));
+
+      expect(api.driverScenario).toHaveBeenCalledWith(1984, 2, params);
+      expect(emitted).toEqual([
+        DriverActions.scenarioResultsSucceeded({ year: 1984, driverId: 2, params, response: scenarioResponse }),
+      ]);
+    });
+
+    it.each([
+      [409, 'This driver is excluded in the scenario.'],
+      [400, 'These scenario settings are not valid.'],
+      [404, 'The driver has no results left under this scenario, or the points system is unknown.'],
+      [0, 'Cannot reach the server. Check your connection and try again.'],
+    ])('explains a %i error', (status, message) => {
+      const effects = setup();
+      api.driverScenario.mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+      const emitted = collect(effects.loadScenarioResults$);
+
+      actions$.next(DriverActions.scenarioResultsRequested({ year: 1984, driverId: 2, params }));
+
+      expect(emitted).toEqual([DriverActions.scenarioResultsFailed({ year: 1984, driverId: 2, params, error: message })]);
+    });
   });
 });

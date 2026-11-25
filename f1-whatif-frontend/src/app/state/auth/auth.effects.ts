@@ -27,8 +27,8 @@ export class AuthEffects {
   readonly login$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.loginSubmitted),
-      switchMap(({ email, password }) =>
-        this.api.login(email, password).pipe(
+      switchMap(({ username, password }) =>
+        this.api.login(username, password).pipe(
           map((response) => AuthActions.loginSucceeded(toSession(response))),
           catchError((error: unknown) => of(AuthActions.authFailed({ error: describeAuthError(error, 'login') }))),
         ),
@@ -40,9 +40,9 @@ export class AuthEffects {
   readonly register$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.registerSubmitted),
-      switchMap(({ email, password }) =>
-        this.api.register(email, password).pipe(
-          switchMap(() => this.api.login(email, password)),
+      switchMap(({ username, password }) =>
+        this.api.register(username, password).pipe(
+          switchMap(() => this.api.login(username, password)),
           map((response) => AuthActions.loginSucceeded(toSession(response))),
           catchError((error: unknown) => of(AuthActions.authFailed({ error: describeAuthError(error, 'register') }))),
         ),

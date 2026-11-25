@@ -50,6 +50,38 @@ const driverSeason = {
   ],
 };
 
+/** Lauda under a scenario: the round given in excludeRounds is left out and counts for nothing. */
+function driverScenarioFor(excludeRounds: string | null, ruleset: string) {
+  const excluded = (excludeRounds ?? '').split(',').filter(Boolean).map(Number);
+  const monacoOut = excluded.includes(6);
+  return {
+    driver: driverSeason.driver,
+    season: 1984,
+    rulesetCode: ruleset,
+    rulesetName: ruleset === 'classic-1961' ? '1961-1990' : ruleset,
+    includeSprints: true,
+    countBest: null,
+    summary: { rank: 1, points: 9, racesCounted: 1, wins: 1, podiums: 1 },
+    races: [
+      {
+        round: 1, raceName: 'Brazilian Grand Prix', date: '1984-03-25', shortened: false, entered: true, excluded: false,
+        team: 'McLaren', grid: 2, status: 'Finished', realFinishPosition: 1, realPositionText: '1', finishPosition: 1,
+        points: 9, counted: true, sprint: null,
+      },
+      {
+        round: 2, raceName: 'South African Grand Prix', date: '1984-04-07', shortened: false, entered: false, excluded: false,
+        team: null, grid: null, status: null, realFinishPosition: null, realPositionText: null, finishPosition: null,
+        points: 0, counted: false, sprint: null,
+      },
+      {
+        round: 6, raceName: 'Monaco Grand Prix', date: '1984-06-03', shortened: true, entered: true, excluded: monacoOut,
+        team: 'McLaren', grid: 1, status: 'Spun off', realFinishPosition: null, realPositionText: 'R', finishPosition: null,
+        points: 0, counted: !monacoOut, sprint: null,
+      },
+    ],
+  };
+}
+
 const driverPhoto = {
   photoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Niki_Lauda.jpg/320px-Niki_Lauda.jpg',
   sourceUrl: 'https://commons.wikimedia.org/wiki/File:Niki_Lauda.jpg',
@@ -111,6 +143,10 @@ export async function mockBackend(page: Page) {
     return json(route, standingsFor(url.searchParams.get('excludeDrivers')));
   });
   await page.route('**/api/seasons/*/drivers/*/results', (route) => json(route, driverSeason));
+  await page.route(/\/api\/seasons\/\d+\/drivers\/\d+\/scenario-results/, (route) => {
+    const url = new URL(route.request().url());
+    return json(route, driverScenarioFor(url.searchParams.get('excludeRounds'), url.searchParams.get('ruleset') ?? ''));
+  });
   await page.route('**/api/drivers/*/photo', (route) => json(route, driverPhoto));
   // The photo itself comes from Wikimedia; answer with a tiny picture so the tests never leave the machine.
   await page.route('https://upload.wikimedia.org/**', (route) =>

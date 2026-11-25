@@ -1,6 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Params, RouterLink } from '@angular/router';
 import { StandingRow } from '../../core/models';
 import { LoadStatus } from '../../state/reference/reference.reducer';
 
@@ -15,6 +15,8 @@ export class StandingsTable {
   readonly rows = input.required<StandingRow[]>();
   /** The season the standings are for; the driver links need it. */
   readonly season = input<number | null>(null);
+  /** Settings of the what-if that the driver links carry, so the driver page can show the same scenario. */
+  readonly queryParams = input<Params | null>(null);
   readonly status = input<LoadStatus>('idle');
   readonly error = input<string | null>(null);
 

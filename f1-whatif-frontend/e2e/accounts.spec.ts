@@ -1,7 +1,7 @@
 import { Page, Route, expect, test } from '@playwright/test';
 import { json, mockBackend } from './mock-backend';
 
-const EMAIL = 'asad@example.com';
+const USERNAME = 'asad';
 const PASSWORD = 'secret-password';
 const TOKEN = 'test-token';
 
@@ -31,19 +31,19 @@ async function mockAccounts(page: Page, scenarios: StoredScenario[]) {
   const now = () => new Date().toISOString();
 
   await page.route('**/api/auth/login', (route) => {
-    const body = route.request().postDataJSON() as { email: string; password: string };
-    return body.email === EMAIL && body.password === PASSWORD
+    const body = route.request().postDataJSON() as { username: string; password: string };
+    return body.username === USERNAME && body.password === PASSWORD
       ? json(route, { accessToken: TOKEN, tokenType: 'Bearer', expiresInSeconds: 3600 })
       : json(route, {}, 401);
   });
   await page.route('**/api/auth/register', (route) => {
-    const body = route.request().postDataJSON() as { email: string };
-    return body.email === 'taken@example.com'
+    const body = route.request().postDataJSON() as { username: string };
+    return body.username === 'taken'
       ? json(route, {}, 409)
-      : json(route, { id: 2, email: body.email, role: 'USER' }, 201);
+      : json(route, { id: 2, username: body.username, role: 'USER' }, 201);
   });
   await page.route('**/api/auth/me', (route) =>
-    authorized(route) ? json(route, { id: 1, email: EMAIL, role: 'USER' }) : unauthorized(route),
+    authorized(route) ? json(route, { id: 1, username: USERNAME, role: 'USER' }) : unauthorized(route),
   );
 
   await page.route('**/api/scenarios', (route) => {
@@ -116,7 +116,7 @@ async function mockAccounts(page: Page, scenarios: StoredScenario[]) {
 }
 
 async function logIn(page: Page) {
-  await page.getByLabel('Email').fill(EMAIL);
+  await page.getByLabel('Username').fill(USERNAME);
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Log in' }).click();
 }
@@ -133,37 +133,37 @@ test.describe('accounts and scenarios', () => {
   test('rejects a wrong password and accepts the right one', async ({ page }) => {
     await page.goto('/login');
 
-    await page.getByLabel('Email').fill(EMAIL);
+    await page.getByLabel('Username').fill(USERNAME);
     await page.getByLabel('Password').fill('wrong-password');
     await page.getByRole('button', { name: 'Log in' }).click();
-    await expect(page.getByRole('alert')).toContainText('Invalid email or password.');
+    await expect(page.getByRole('alert')).toContainText('Invalid username or password.');
 
     await page.getByLabel('Password').fill(PASSWORD);
     await page.getByRole('button', { name: 'Log in' }).click();
 
     await expect(page).toHaveURL(/\/explorer$/);
-    await expect(page.getByTestId('user-email')).toHaveText(EMAIL);
+    await expect(page.getByTestId('user-name')).toHaveText(USERNAME);
   });
 
   test('validates the form before sending it', async ({ page }) => {
     await page.goto('/register');
 
-    await page.getByLabel('Email').fill('not-an-email');
+    await page.getByLabel('Username').fill('x');
     await page.getByLabel('Password').fill('short');
     await page.getByRole('button', { name: 'Sign up' }).click();
 
-    await expect(page.getByText('Enter a valid email address.')).toBeVisible();
+    await expect(page.getByText('Use 3 to 30 letters, digits, dots, underscores or hyphens.')).toBeVisible();
     await expect(page.getByText('Use 8 to 72 characters.')).toBeVisible();
   });
 
-  test('explains an email address that is already registered', async ({ page }) => {
+  test('explains a username that is already taken', async ({ page }) => {
     await page.goto('/register');
 
-    await page.getByLabel('Email').fill('taken@example.com');
+    await page.getByLabel('Username').fill('taken');
     await page.getByLabel('Password').fill(PASSWORD);
     await page.getByRole('button', { name: 'Sign up' }).click();
 
-    await expect(page.getByRole('alert')).toContainText('already registered');
+    await expect(page.getByRole('alert')).toContainText('already taken');
   });
 
   test('sends a visitor to the login page and back to the page they wanted', async ({ page }) => {
@@ -179,10 +179,10 @@ test.describe('accounts and scenarios', () => {
   test('stays logged in after a reload and logs out on request', async ({ page }) => {
     await page.goto('/login');
     await logIn(page);
-    await expect(page.getByTestId('user-email')).toBeVisible();
+    await expect(page.getByTestId('user-name')).toBeVisible();
 
     await page.reload();
-    await expect(page.getByTestId('user-email')).toHaveText(EMAIL);
+    await expect(page.getByTestId('user-name')).toHaveText(USERNAME);
 
     await page.getByRole('button', { name: 'Log out' }).click();
     await expect(

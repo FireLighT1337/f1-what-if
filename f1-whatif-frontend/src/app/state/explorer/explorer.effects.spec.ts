@@ -21,6 +21,8 @@ const query: StandingsQuery = {
 const response: StandingsResponse = { season: 1984, ruleset: 'classic-1961', standings: [] };
 
 describe('ExplorerEffects', () => {
+  // Selector overrides live on module-level selectors; without a reset they leak into other spec files.
+  afterEach(() => TestBed.inject(MockStore).resetSelectors());
   let actions$: Subject<Action>;
   let api: { standings: ReturnType<typeof vi.fn> };
   let emitted: Action[];
@@ -87,5 +89,15 @@ describe('ExplorerEffects', () => {
 
     expect(api.standings).not.toHaveBeenCalled();
     expect(emitted).toEqual([]);
+  });
+
+  it('recalculates the standings when the defaults are restored', () => {
+    api.standings.mockReturnValue(of(response));
+
+    actions$.next(ExplorerActions.defaultsRestored({ seasons: [], rulesets: [] }));
+    vi.advanceTimersByTime(STANDINGS_DEBOUNCE_MS);
+
+    expect(api.standings).toHaveBeenCalledWith(query);
+    expect(emitted).toEqual([ExplorerActions.standingsSucceeded({ response })]);
   });
 });

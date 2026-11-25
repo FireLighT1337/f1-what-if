@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AuthActions } from '../../state/auth/auth.actions';
@@ -27,7 +27,8 @@ export class AuthPage {
   protected readonly queryParams = computed(() => (this.returnUrl() ? { returnUrl: this.returnUrl() } : {}));
 
   protected readonly form = inject(NonNullableFormBuilder).group({
-    email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
+    // Logging in only asks for something to look up, so accounts created earlier with an email address still work.
+    username: ['', [Validators.required, Validators.maxLength(254), (control: AbstractControl) => this.usernameFormat(control)]],
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72)]],
   });
 
@@ -36,7 +37,17 @@ export class AuthPage {
     effect(() => {
       this.mode();
       this.store.dispatch(AuthActions.formOpened());
+      // The username rules differ between login and sign up.
+      this.form.controls.username.updateValueAndValidity();
     });
+  }
+
+  /** Sign up only: 3 to 30 letters, digits, dots, underscores or hyphens (the backend checks the same). */
+  private usernameFormat(control: AbstractControl): { format: true } | null {
+    if (this.isLogin()) {
+      return null;
+    }
+    return /^[A-Za-z0-9_.-]{3,30}$/.test(String(control.value ?? '')) ? null : { format: true };
   }
 
   protected submit(): void {
@@ -44,9 +55,9 @@ export class AuthPage {
       this.form.markAllAsTouched();
       return;
     }
-    const { email, password } = this.form.getRawValue();
+    const { username, password } = this.form.getRawValue();
     this.store.dispatch(
-      this.isLogin() ? AuthActions.loginSubmitted({ email, password }) : AuthActions.registerSubmitted({ email, password }),
+      this.isLogin() ? AuthActions.loginSubmitted({ username, password }) : AuthActions.registerSubmitted({ username, password }),
     );
   }
 }

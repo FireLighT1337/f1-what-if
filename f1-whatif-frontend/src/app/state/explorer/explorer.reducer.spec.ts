@@ -181,4 +181,47 @@ describe('explorer reducer with saved scenarios', () => {
     expect(state.status).toBe('error');
     expect(state.error).toBe('Cannot reach the server.');
   });
+
+  describe('defaultsRestored', () => {
+    it('resets every choice to the newest season and the default points system', () => {
+      const chosen: ExplorerState = {
+        ...initialExplorerState,
+        season: 1984,
+        rulesetCode: 'classic-1961',
+        includeSprints: false,
+        countBest: 11,
+        excludedDriverIds: [1],
+        excludedRounds: [2],
+        scenario: { id: 5, name: 'Mine' },
+        standings: response,
+        status: 'loaded',
+      };
+
+      const state = reduce(chosen, ExplorerActions.defaultsRestored({ seasons, rulesets }));
+
+      expect(state).toEqual({
+        ...initialExplorerState,
+        season: 2026,
+        rulesetCode: DEFAULT_RULESET,
+        status: 'loading',
+      });
+    });
+
+    it('falls back to the first points system when the default is not offered', () => {
+      const state = reduce(
+        initialExplorerState,
+        ExplorerActions.defaultsRestored({ seasons, rulesets: [rulesets[0]] }),
+      );
+
+      expect(state.rulesetCode).toBe('classic-1961');
+    });
+
+    it('stays idle when there are no seasons yet', () => {
+      const chosen: ExplorerState = { ...initialExplorerState, excludedRounds: [2], status: 'loaded' };
+
+      const state = reduce(chosen, ExplorerActions.defaultsRestored({ seasons: [], rulesets: [] }));
+
+      expect(state).toEqual(initialExplorerState);
+    });
+  });
 });
